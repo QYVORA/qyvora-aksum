@@ -33,8 +33,8 @@ func sectionTypeName(t elf.SectionType) string {
 		return "SYMTAB"
 	case elf.SHT_STRTAB:
 		return "STRTAB"
-	case elf.SHT_RELA:
-		return "RELA"
+	case elf.SHT_RELA: //nolint:misspell // RELA is the ELF specification term
+		return "RELA" //nolint:misspell
 	case elf.SHT_HASH:
 		return "HASH"
 	case elf.SHT_DYNAMIC:
@@ -176,12 +176,13 @@ func symbolNames(syms []elf.Symbol) []string {
 	return out
 }
 
-// decodeRelocations parses SHT_RELA/SHT_REL entries (ELF32 + ELF64, either
-// endianness). debug/elf exposes the entry layout only as documentation, so
+// decodeRelocations parses SHT_RELA and SHT_REL relocation sections (ELF32 +
+// ELF64, either endianness; RELA is the ELF specification term).
+// debug/elf exposes the entry layout only as documentation, so
 // the record walk is implemented here.
 func decodeRelocations(f *elf.File, sec *elf.Section, data []byte) ([]Reloc, error) {
 	names := symNamesFor(f, sec)
-	is64 := f.FileHeader.Class == elf.ELFCLASS64
+	is64 := f.Class == elf.ELFCLASS64
 	entrySz := 16 // RELA64: off8 info8 addend8 ; RELA32: 12 ; REL64: 16 ; REL32: 8
 	if !is64 {
 		entrySz = 12
@@ -204,7 +205,7 @@ func decodeRelocations(f *elf.File, sec *elf.Section, data []byte) ([]Reloc, err
 		if is64 {
 			r.Offset = bo.Uint64(data[off:])
 			info = bo.Uint64(data[off+8:])
-		} else if sec.Type == elf.SHT_RELA {
+		} else if sec.Type == elf.SHT_RELA { //nolint:misspell // ELF spec term
 			r.Offset = uint64(bo.Uint32(data[off:]))
 			info = uint64(bo.Uint32(data[off+4:]))
 		} else {

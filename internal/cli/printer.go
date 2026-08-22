@@ -1,20 +1,11 @@
 package cli
 
-import (
-	"os"
-
-	"github.com/QYVORA/qyvora-aksum/internal/output"
-)
-
-// outputPrinter aliases the shared printer so command files stay readable.
-type outputPrinter = output.Printer
-
-func newOutputPrinter() *outputPrinter { return output.New() }
+import "os"
 
 // eventsWriter resolves the --events flag to a stream destination.
 // "stdout"/"stderr" select those streams; anything else is a file path
 // created with restrictive permissions (analysis targets are untrusted;
-// never world-writable logs).
+// never world-writable logs). A disabled writer returns ok=false.
 func eventsWriter() (*os.File, func() error, bool) {
 	switch eventsFlag {
 	case "", "stdout":

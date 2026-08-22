@@ -30,7 +30,7 @@ func Identify(t *binary.Target, f FileAt) error {
 	t.SHA256 = hex.EncodeToString(sum[:])
 
 	bits := 32
-	if e.FileHeader.Class == elf.ELFCLASS64 {
+	if e.Class == elf.ELFCLASS64 {
 		bits = 64
 	}
 	t.Class = fmt.Sprintf("ELF%d", bits)
@@ -159,7 +159,7 @@ func Identify(t *binary.Target, f FileAt) error {
 	return nil
 }
 
-func hasInterpOrDyn(e *elf.File) bool { return false } // static execs carry no PT_INTERP; kept explicit for clarity
+func hasInterpOrDyn(_ *elf.File) bool { return false } // static execs carry no PT_INTERP; kept explicit for clarity
 
 func bindsNow(e *elf.File) bool {
 	if vals, err := e.DynValue(elf.DT_BIND_NOW); err == nil && len(vals) > 0 && vals[0] != 0 {

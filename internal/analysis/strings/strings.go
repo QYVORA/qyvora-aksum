@@ -15,8 +15,6 @@ import (
 	"regexp"
 	"strings"
 	"unicode/utf8"
-
-	strpkg "strings"
 )
 
 // Confidence levels for string classification.
@@ -192,7 +190,7 @@ func addrAt(sectionVaddr, sectionFileOff, filePos uint64) uint64 {
 }
 
 func sanitizeRun(b []byte) string {
-	var sb strpkg.Builder
+	var sb strings.Builder
 	for _, c := range b {
 		if c >= 0x20 && c < 0x7f {
 			sb.WriteByte(c)
@@ -228,6 +226,9 @@ func Classify(s Str) *Classified {
 		// Format matches known key/token shapes; needs manual confirmation.
 		c.Class, c.Confidence = ClassPotentialKey, ConfMedium
 		return c
+	}
+	if reIPv4.MatchString(s.Value) {
+		return &Classified{Str: s, Class: "network_addr", Confidence: ConfMedium}
 	}
 	if reURL.MatchString(s.Value) {
 		if u, err := url.Parse(s.Value); err == nil && u.Host != "" {
@@ -279,14 +280,14 @@ func ClassifyAll(strs []Str) []Classified {
 }
 
 func trimNonWord(s string) string {
-	return strpkg.Trim(s, "\"'` \t\r\n()[]{};,")
+	return strings.Trim(s, "\"'` \t\r\n()[]{};,")
 }
 
 // isLiteralIP checks whether the string's first token parses as an IP.
 func isLiteralIP(v string) bool {
 	tok := v
-	if i := strpkg.IndexAny(tok, " \t\r\n"); i > 0 {
+	if i := strings.IndexAny(tok, " \t\r\n"); i > 0 {
 		tok = tok[:i]
 	}
-	return net.ParseIP(tok) != nil && strpkg.Contains(tok, ".") // IPv4-shaped only; bare "::" noise excluded
+	return net.ParseIP(tok) != nil && strings.Contains(tok, ".") // IPv4-shaped only; bare "::" noise excluded
 }

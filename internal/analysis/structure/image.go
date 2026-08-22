@@ -209,7 +209,7 @@ func (im *Image) Relocs() []Reloc {
 	var out []Reloc
 	for _, s := range im.file.Sections {
 		switch s.Type {
-		case elf.SHT_RELA, elf.SHT_REL:
+		case elf.SHT_RELA, elf.SHT_REL: //nolint:misspell // ELF spec term
 			data, err := s.Data()
 			if err != nil {
 				continue

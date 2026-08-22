@@ -68,7 +68,7 @@ assess.`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Version:       version.Version,
-		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			if formatFlag != "" && formatFlag != "terminal" && formatFlag != "json" {
 				return usagef("invalid --format %q (terminal, json)", formatFlag)
 			}
@@ -105,7 +105,7 @@ assess.`,
 		return usageError{err}
 	})
 
-	root.AddCommand(newVersionCmd())
+	root.AddCommand(newVersionCmd(), newAnalyzeCmd())
 	registerTargetCommands(root)
 	registerCodeCommands(root)
 	return root
