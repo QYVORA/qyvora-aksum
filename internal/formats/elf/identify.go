@@ -9,9 +9,7 @@
 package elf
 
 import (
-	"crypto/sha256"
 	"debug/elf"
-	"encoding/hex"
 	"fmt"
 	"io"
 
@@ -25,9 +23,6 @@ func Identify(t *binary.Target, f FileAt) error {
 		return fmt.Errorf("parse ELF: %w", err)
 	}
 	defer e.Close() //nolint:errcheck // debug/elf holds no external resources
-
-	sum := sha256.Sum256(f.ReadAll())
-	t.SHA256 = hex.EncodeToString(sum[:])
 
 	bits := 32
 	if e.Class == elf.ELFCLASS64 {

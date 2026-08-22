@@ -114,49 +114,64 @@ func (b *Builder) Build() Finding {
 	return b.f
 }
 
-// Dedupe collapses findings sharing a rule and evidence signature, keeping
-// the highest-confidence instance and merging evidence.
+// Dedupe groups findings sharing a rule whose evidence overlaps (same rule,
+// same observation) into one record, keeping the highest confidence and
+// unioning evidence. Grouping is order-independent: it depends only on the
+// rule/location relation structure, so repeated runs produce identical IDs.
 func Dedupe(all []Finding) []Finding {
-	type key struct {
-		rule  string
-		idSig string
+	// Bucket by rule, then connect components through shared locations.
+	type bucket struct {
+		locOwner map[string]int // location -> component index
+		comps    [][]Finding
 	}
-	byKey := map[key]*Finding{}
-	var order []key
-	for i := range all {
-		f := all[i]
-		locs := make([]string, 0, len(f.Evidence))
-		for _, e := range f.Evidence {
-			locs = append(locs, e.Kind+"@"+e.Location)
+	buckets := map[string]*bucket{}
+	for _, f := range all {
+		b := buckets[f.Rule]
+		if b == nil {
+			b = &bucket{locOwner: map[string]int{}}
+			buckets[f.Rule] = b
 		}
-		sort.Strings(locs)
-		k := key{f.Rule, strings.Join(locs, "|")}
-		existing, ok := byKey[k]
-		if !ok {
-			cp := f
-			byKey[k] = &cp
-			order = append(order, k)
-			continue
+		locs := locations(f)
+		ci := -1
+		for _, l := range locs {
+			if owner, ok := b.locOwner[l]; ok {
+				ci = owner
+				break
+			}
 		}
-		if confRank[f.Confidence] > confRank[existing.Confidence] {
-			existing.Confidence = f.Confidence
+		if ci < 0 {
+			b.comps = append(b.comps, nil)
+			ci = len(b.comps) - 1
 		}
-		for _, e := range f.Evidence {
-			dup := false
-			for _, ex := range existing.Evidence {
-				if ex.Kind == e.Kind && ex.Location == e.Location && ex.Detail == e.Detail {
-					dup = true
-					break
+		b.comps[ci] = append(b.comps[ci], f)
+		for _, l := range locs {
+			b.locOwner[l] = ci
+		}
+	}
+
+	var out []Finding
+	for _, rule := range sortedKeys(buckets) {
+		b := buckets[rule]
+		for _, comp := range b.comps {
+			merged := comp[0]
+			seen := map[string]bool{}
+			for i := 1; i < len(comp); i++ {
+				if confRank[comp[i].Confidence] > confRank[merged.Confidence] {
+					merged.Confidence = comp[i].Confidence
+				}
+				merged.Evidence = append(merged.Evidence, comp[i].Evidence...)
+			}
+			var uniq []Evidence
+			for _, e := range merged.Evidence {
+				k := e.Kind + "@" + e.Location + "\x00" + e.Detail
+				if !seen[k] {
+					seen[k] = true
+					uniq = append(uniq, e)
 				}
 			}
-			if !dup {
-				existing.Evidence = append(existing.Evidence, e)
-			}
+			merged.Evidence = uniq
+			out = append(out, merged)
 		}
-	}
-	out := make([]Finding, 0, len(order))
-	for _, k := range order {
-		out = append(out, *byKey[k])
 	}
 	// Deterministic presentation order: severity desc, then rule, then ID.
 	sort.Slice(out, func(i, j int) bool {
@@ -170,4 +185,22 @@ func Dedupe(all []Finding) []Finding {
 		return out[i].ID < out[j].ID
 	})
 	return out
+}
+
+func locations(f Finding) []string {
+	locs := make([]string, 0, len(f.Evidence))
+	for _, e := range f.Evidence {
+		locs = append(locs, e.Kind+"@"+e.Location)
+	}
+	sort.Strings(locs)
+	return locs
+}
+
+func sortedKeys[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

@@ -51,8 +51,11 @@ func Build(entry uint64, insts []disasm.Instruction) *Graph {
 					leader[t] = true
 				}
 			}
-			if i+1 < len(insts) && in.Flow == disasm.FlowCond {
-				leader[i+1] = true // fallthrough arm
+			// The instruction after any branch starts a new block: after a
+			// conditional it is the fallthrough arm; after an unconditional
+			// jump it is (usually) unreachable code.
+			if i+1 < len(insts) {
+				leader[i+1] = true
 			}
 		case disasm.FlowRet, disasm.FlowHlt:
 			if i+1 < len(insts) {

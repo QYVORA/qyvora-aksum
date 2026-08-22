@@ -6,6 +6,8 @@
 package loader
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -34,15 +36,26 @@ func Open(path string) (*binary.Target, error) {
 	}
 
 	magic := make([]byte, 4)
-	if _, err := ioReadFull(f, magic); err != nil {
-		return nil, fmt.Errorf("%s: too small to contain a known format header (%d bytes)", path, st.Size())
-	}
-
+	n, err := ioReadFull(f, magic)
 	t := &binary.Target{Path: path, Size: st.Size()}
+	if err != nil && n < 1 {
+		// Too small to hold any known header: still a valid analysis target
+		// for RAW-mode strings; identification is honestly unavailable.
+		t.Format = binary.FormatRaw
+		return t, nil
+	}
+	if _, serr := f.Seek(0, 0); serr != nil {
+		return nil, fmt.Errorf("rewind %s: %w", path, serr)
+	}
+	// Every target carries a content hash — it anchors findings and reports
+	// to the exact analyzed artifact.
+	fa := &fileAt{f: f}
+	sum := sha256.Sum256(fa.ReadAll())
+	t.SHA256 = hex.EncodeToString(sum[:])
 	switch {
 	case magic[0] == 0x7f && magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F':
 		t.Format = binary.FormatELF
-		if err := elf.Identify(t, &fileAt{f: f}); err != nil {
+		if err := elf.Identify(t, fa); err != nil {
 			return nil, err
 		}
 	default:
