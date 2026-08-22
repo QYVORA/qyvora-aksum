@@ -8,31 +8,54 @@ import (
 // ErrNoExecutableRegion reports a file with no executable code to analyze.
 var ErrNoExecutableRegion = errors.New("no executable code region found")
 
-// ExecutableRegion returns the virtual base and file bytes of the primary
-// executable code region (.text when present, else the first allocated
-// SHF_EXECINSTR PROGBITS section).
+// ExecutableRegion returns the virtual base and file bytes spanning every
+// allocated executable code section (.text, .init, .plt, .plt.sec, ...).
+// The region is stitched from the individual sections; any alignment gaps
+// are filled with INT3 so linear decoding terminates at them instead of
+// inventing instructions.
 func (im *Image) ExecutableRegion() (uint64, []byte, error) {
-	var chosen *elf.Section
+	var secs []*elf.Section
 	for _, s := range im.file.Sections {
 		if s.Type != elf.SHT_PROGBITS || s.Size == 0 || s.Flags&elf.SHF_EXECINSTR == 0 {
 			continue
 		}
-		if chosen == nil || s.Name == ".text" {
-			chosen = s
-			if s.Name == ".text" {
-				break
-			}
-		}
+		secs = append(secs, s)
 	}
-	if chosen == nil {
+	if len(secs) == 0 {
 		return 0, nil, ErrNoExecutableRegion
 	}
-	data := make([]byte, chosen.Size)
-	n, err := chosen.ReadAt(data, 0)
-	if err != nil && err.Error() != "EOF" {
-		return 0, nil, err
+
+	lo, hi := secs[0].Addr, secs[0].Addr+secs[0].Size
+	for _, s := range secs[1:] {
+		if s.Addr < lo {
+			lo = s.Addr
+		}
+		if end := s.Addr + s.Size; end > hi {
+			hi = end
+		}
 	}
-	return chosen.Addr, data[:n], nil
+
+	// INT3 padding: unreachable-by-construction filler that halts linear
+	// sweeps at section boundaries rather than mis-decoding them.
+	data := make([]byte, hi-lo)
+	for i := range data {
+		data[i] = 0xCC
+	}
+	buf := make([]byte, 0, 4096)
+	for _, s := range secs {
+		buf = buf[:cap(buf)]
+		if cap(buf) < int(s.Size) {
+			buf = make([]byte, s.Size)
+		} else {
+			buf = buf[:s.Size]
+		}
+		n, err := s.ReadAt(buf, 0)
+		if err != nil && err.Error() != "EOF" {
+			return 0, nil, err
+		}
+		copy(data[s.Addr-lo:], buf[:n])
+	}
+	return lo, data, nil
 }
 
 // PLTSection returns the virtual range of .plt.sec or .plt when present.
