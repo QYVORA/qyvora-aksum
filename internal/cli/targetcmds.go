@@ -24,6 +24,7 @@ func registerTargetCommands(root *cobra.Command) {
 		newSymbolsCmd(),
 		newImportsCmd(),
 		newStringsCmd(),
+		newSurfaceCmd(),
 	)
 }
 
