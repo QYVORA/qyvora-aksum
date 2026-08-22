@@ -51,6 +51,9 @@ var sevRank = map[Severity]int{
 // Rank exposes ordering for external sorting/reporting.
 func (s Severity) Rank() int { return sevRank[s] }
 
+// Rank exposes confidence ordering for external passes (validation).
+func (c Confidence) Rank() int { return confRank[c] }
+
 // Evidence is one verifiable observation backing a finding.
 type Evidence struct {
 	Kind     string `json:"kind"`             // property|import|string|code|xref|segment
