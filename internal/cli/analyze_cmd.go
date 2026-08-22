@@ -12,9 +12,11 @@ import (
 	strscan "github.com/QYVORA/qyvora-aksum/internal/analysis/strings"
 	"github.com/QYVORA/qyvora-aksum/internal/binary"
 	"github.com/QYVORA/qyvora-aksum/internal/checks"
+	"github.com/QYVORA/qyvora-aksum/internal/dataflow"
 	"github.com/QYVORA/qyvora-aksum/internal/events"
 	"github.com/QYVORA/qyvora-aksum/internal/findings"
 	"github.com/QYVORA/qyvora-aksum/internal/output"
+	"github.com/QYVORA/qyvora-aksum/internal/validation"
 )
 
 // sanitizeTerminal strips control characters from binary-derived text
@@ -37,6 +39,8 @@ type analyzeSummary struct {
 	StringsExtracted  int            `json:"strings_extracted"`
 	StringsClassified int            `json:"strings_classified"`
 	Imports           int            `json:"imports"`
+	CallSitesResolved int            `json:"call_sites_resolved"`
+	ValidatedCount    int            `json:"findings_validated"`
 	BySeverity        map[string]int `json:"by_severity"`
 	ByConfidence      map[string]int `json:"by_confidence"`
 }
@@ -78,16 +82,23 @@ seen, why the rule fired, and what validation would confirm it.`,
 					"target": path, "strings": len(extracted),
 				})
 			}
+			classified := strscan.ClassifyAll(extracted)
+
+			// Stage 15/19-21: resolve call-site arguments, then let the
+			// validation pass corroborate rule findings with that evidence.
+			sites := dataflow.New(ac.im.Relocs(), ac.funcs, classified).AnalyzeAll(ac.funcs)
 			ctx := &checks.Context{
-				Target:   ac.im.Target,
-				Imports:  ac.im.Imports(),
-				Segments: ac.im.Segments(),
-				Strings:  strscan.ClassifyAll(extracted),
+				Target:    ac.im.Target,
+				Imports:   ac.im.Imports(),
+				Segments:  ac.im.Segments(),
+				Strings:   classified,
+				CallSites: sites,
 			}
 			found, err := checks.Run(ctx)
 			if err != nil {
 				return err
 			}
+			vres := validation.Validate(found, sites)
 			kept := make([]findings.Finding, 0, len(found))
 			for _, f := range found {
 				if f.Severity.Rank() >= min {
@@ -104,6 +115,8 @@ seen, why the rule fired, and what validation would confirm it.`,
 					StringsExtracted:  len(extracted),
 					StringsClassified: len(ctx.Strings),
 					Imports:           len(ctx.Imports),
+					CallSitesResolved: len(sites),
+					ValidatedCount:    vres.Upgraded,
 					BySeverity:        severityCounts(kept),
 					ByConfidence:      confidenceCounts(kept),
 				},
@@ -152,8 +165,9 @@ func confidenceCounts(fs []findings.Finding) map[string]int {
 func renderAnalyze(p *output.Printer, r *AnalyzeReport) {
 	t := r.Target
 	p.Info("ANALYSIS", fmt.Sprintf("Target: %s (%s/%s)", t.Path, t.Format, t.Arch))
-	p.Info("ANALYSIS", fmt.Sprintf("Discovered %d functions; extracted %d strings (%d security-relevant); %d imports.",
-		r.Summary.Functions, r.Summary.StringsExtracted, r.Summary.StringsClassified, r.Summary.Imports))
+	p.Info("ANALYSIS", fmt.Sprintf("Discovered %d functions; extracted %d strings (%d security-relevant); %d imports; %d call sites resolved (%d finding(s) validated).",
+		r.Summary.Functions, r.Summary.StringsExtracted, r.Summary.StringsClassified, r.Summary.Imports,
+		r.Summary.CallSitesResolved, r.Summary.ValidatedCount))
 	fmt.Printf("\nFINDINGS (%d)\n", len(r.Findings))
 	if len(r.Findings) == 0 {
 		fmt.Println("  none at or above the selected threshold")

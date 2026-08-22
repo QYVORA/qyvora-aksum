@@ -148,13 +148,11 @@ func TestDangerousCallSiteIsValidated(t *testing.T) {
 		}
 	}
 	if hit == nil {
-		t.Fatalf("dangerous-call-strcpy not reported; rules: %v", func() []string {
-			var r []string
-			for _, f := range fs {
-				r = append(r, f.Rule)
-			}
-			return r
-		}())
+		r := make([]string, 0, len(fs))
+		for _, f := range fs {
+			r = append(r, f.Rule)
+		}
+		t.Fatalf("dangerous-call-strcpy not reported; rules: %v", r)
 	}
 	if hit.Confidence != findings.ConfValidated || hit.Severity != findings.SevHigh {
 		t.Errorf("confidence/severity = %s/%s, want VALIDATED/high", hit.Confidence, hit.Severity)
