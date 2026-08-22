@@ -5,7 +5,13 @@
 // dumps (spec sections 11-12).
 package disasm
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+	"regexp"
+	"strconv"
+	"strings"
+)
 
 // FlowClass describes how an instruction affects control flow.
 type FlowClass int
@@ -77,4 +83,43 @@ type Decoder interface {
 	Decode(code []byte, base uint64) ([]Instruction, error)
 	// Arch reports the architecture name this decoder handles.
 	Arch() string
+}
+
+// reRipOperand matches the Intel rendering of a RIP-relative operand,
+// e.g. "[RIP+0x1234]" / "[rip-0x8]". The renderer prints the raw disp32
+// magnitude under a '+' even when the displacement is negative.
+var reRipOperand = regexp.MustCompile(`(?i)^\[\s*rip\s*([+-])\s*(0x[0-9a-f]+|\d+)\s*(?:\].*)$`)
+
+// IsRipRelative reports whether a memory operand is RIP-relative.
+func IsRipRelative(op Operand) bool {
+	return op.Kind == "mem" && len(op.Text) > 4 && strings.EqualFold(op.Text[:4], "[rip")
+}
+
+// ripDisplacement recovers the signed displacement for a RIP-relative
+// operand. Operand.Value carries the unsigned magnitude (the upstream
+// decoder zero-extends negative disp32 values), so the rendered sign and
+// width decide polarity: '+0xffffxxxx' is a negative 32-bit displacement.
+func ripDisplacement(op Operand) int64 {
+	m := reRipOperand.FindStringSubmatch(op.Text)
+	if m == nil {
+		return int64(op.Value)
+	}
+	v, err := strconv.ParseUint(m[2], 0, 64)
+	if err != nil {
+		return int64(op.Value)
+	}
+	if m[1] == "-" {
+		return -int64(v)
+	}
+	if v > math.MaxInt32 && v <= math.MaxUint32 {
+		return int64(v) - (1 << 32)
+	}
+	return int64(v)
+}
+
+// RipTarget returns the effective address targeted by a RIP-relative
+// memory operand of instruction in: next-instruction boundary plus the
+// sign-corrected displacement.
+func RipTarget(in Instruction, op Operand) uint64 {
+	return in.Addr + uint64(in.Size) + uint64(ripDisplacement(op))
 }

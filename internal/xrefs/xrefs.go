@@ -7,7 +7,6 @@ package xrefs
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/QYVORA/qyvora-aksum/internal/disasm"
 )
@@ -46,9 +45,9 @@ func Build(insts []disasm.Instruction, ownerOf map[uint64]uint64) *Table {
 			// RIP-relative data operand: effective address = next instruction
 			// boundary + displacement. The decoder stores disp in mem operands.
 			for _, op := range in.Operands {
-				if op.Kind == "mem" && isRipRel(op.Text) {
-					to := in.Addr + uint64(in.Size) + uint64(int64(op.Value))
-					add(Ref{From: in.Addr, FromFunc: owner, To: to, Kind: "data"})
+				if disasm.IsRipRelative(op) {
+					add(Ref{From: in.Addr, FromFunc: owner,
+						To: disasm.RipTarget(*in, op), Kind: "data"})
 				}
 			}
 		}
@@ -61,9 +60,4 @@ func (t *Table) XrefsTo(addr uint64) []Ref {
 	out := append([]Ref(nil), t.ByTarget[addr]...)
 	sort.Slice(out, func(i, j int) bool { return out[i].From < out[j].From })
 	return out
-}
-
-// isRipRel detects Intel-syntax RIP-relative operands ("[RIP+0x1234]").
-func isRipRel(opText string) bool {
-	return len(opText) > 4 && strings.EqualFold(opText[:4], "[rip")
 }
