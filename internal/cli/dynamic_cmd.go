@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/QYVORA/qyvora-aksum/internal/binary"
 	"github.com/QYVORA/qyvora-aksum/internal/dynamic"
 )
 
@@ -81,6 +82,11 @@ func runDynamicPlan(c *cobra.Command, args []string) error {
 	pol, err := dynamicPolicyFromFlags(c)
 	if err != nil {
 		return usagef("%v", err)
+	}
+	// An unidentified target is a property of the content, not of the
+	// invocation: report it as unsupported (exit 3), not as a usage error.
+	if t.Format == binary.FormatRaw {
+		return unsupportedf("%s: format %q is unidentified; refusing to plan execution of unknown content", t.Path, t.Format)
 	}
 	plan, perr := dynamic.BuildPlan(t, rawArgs, pol)
 	if perr != nil {
