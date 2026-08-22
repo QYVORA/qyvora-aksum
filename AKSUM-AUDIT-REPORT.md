@@ -31,7 +31,21 @@ follows the framework-wide audit methodology established in
 | Vet | `go vet ./...` | PASS |
 | Format | `gofmt -l .` | clean (no output) |
 | Lint | `golangci-lint run ./...` | **0 issues** |
-| Tests | `go test -race -count=1 ./...` | all suites pass (cfg, checks, disasm/x86, findings, functions, loader) |
+| Tests | `go test -race -count=1 ./...` | all suites pass (cfg, checks, dataflow, disasm/x86, dynamic, findings, functions, integration, loader, testfix, validation) |
+
+### Dataflow / validation chain (live evidence)
+
+On a crafted binary containing `system("/tmp/backup.sh")`:
+
+```
+summary: 11 functions, 4 call sites resolved, 2 findings validated
+VALIDATED: system() called with static string "/tmp/backup.sh"   [high]
+VALIDATED: system() imported                                      [medium]
+```
+
+The import-presence finding escalated CANDIDATE→VALIDATED purely from
+dataflow corroboration; a control binary whose dangerous calls carry only
+runtime-computed arguments stayed honestly at CANDIDATE.
 
 ### Exit-code contract
 
@@ -73,6 +87,10 @@ switch.
 | Disassembly | `internal/disasm`, `internal/disasm/x86` | structured instruction model; x86asm-backed; CET endbr pre-decode |
 | Functions | `internal/functions` | multi-source discovery with provenance + high/medium/low confidence |
 | Graphs | `internal/cfg`, `internal/xrefs` | leader-based blocks, resolved-only edges, back-edge loops, unreachable detection; call/jump/RIP-relative data refs |
+| Dataflow | `internal/dataflow` | intra-procedural call-site argument tracking; PLT→import resolution via JUMP_SLOT relocations; string-typed arguments |
+| Attack surface | `internal/surface` + `aksum surface` | aggregated entry points, categorized risky imports, export and string-class summaries (observation counts only) |
+| Validation | `internal/validation` | confidence escalation CANDIDATE/SUSPECTED→VALIDATED on dataflow corroboration, with appended callsite evidence |
+| Dynamic architecture | `internal/dynamic` + `aksum dynamic` | Policy bounds (mechanically validated), auditable Plan JSON, Sandbox interface; PlanOnlyBackend refuses execution honestly |
 | Knowledge base | `internal/security/class` | security-relevant API categorization |
 | Findings | `internal/findings` | OBSERVED→CONFIRMED states, severity ranking, deterministic SHA-256 IDs, overlap dedup |
 | Checks | `internal/checks` | hardening, W+X segments, dangerous imports, weak crypto/sensitive strings, execution surface |
@@ -90,19 +108,27 @@ to hold:
 2. **Non-x86 disassembly**: decoder registry covers x86/x86-64 only; other
    architectures produce a typed unsupported error (exit 3), never a guess.
    Accurate.
-3. **Dynamic analysis / CONFIRMED state**: the `CONFIRMED` confidence level
-   is defined but no rule can emit it today; nothing in the CLI claims
-   dynamic capabilities. Accurate.
-4. **Function boundaries are conservative**: bounded forward decode from
-   seeds; indirect-call-only callees and jump-table-driven functions may be
-   missed. Discovery under-approximates by design; docs say so.
-5. **String-derived findings stay SUSPECTED**: weak-crypto and sensitive-
-   string rules cannot escalate without code cross-reference corroboration
-   (a future VALIDATED pathway). Verified in rule implementations.
-6. **No exploitability claims**: dangerous-import findings are CANDIDATE
-   with explicit "presence is not proof of misuse" language. Verified.
-7. **RAW-mode honesty**: identification prints "unknown container" and
-   offers strings only. Verified live.
+3. **Dynamic analysis**: the architecture exists (policy, plans, sandbox
+   interface) but this build bundles no executor; `dynamic run` refuses
+   with exit 3 and `dynamic plan` validates without executing. CONFIRMED
+   stays reserved for a future real backend. Accurate.
+4. **Dataflow is intra-procedural and conservative**: no cross-block flow,
+   no arithmetic modeling, PUSH/POP untracked; state resets at returns and
+   off-path jumps. Arguments are reported only when provably materialized.
+5. **Function boundaries are bounded forward decode** from seeds, stopping
+   at ret/hlt and at unconditional jumps off the fall-through path;
+   indirect-call-only callees may be missed. Discovery under-approximates
+   by design; docs say so.
+6. **String-derived findings stay SUSPECTED**: weak-crypto and sensitive-
+   string rules cannot escalate without dataflow corroboration (which the
+   validation pass applies automatically where available). Verified in
+   rule implementations.
+7. **No exploitability claims**: dangerous-import findings are CANDIDATE
+   with explicit "presence is not proof of misuse" language; only
+   statically-resolved call sites justify VALIDATED. Verified.
+8. **RAW-mode honesty**: identification prints "unknown container" and
+   offers strings only; dynamic planning refuses unidentified content.
+   Verified live.
 
 ## 5. Defects found and fixed during audit
 
@@ -121,6 +147,20 @@ to hold:
 5. **Short files errored instead of degrading to RAW** (fixed pre-audit):
    sub-header-size files now return a valid RAW target so strings analysis
    remains possible.
+6. **Negative RIP-relative displacements computed unsigned** (fixed):
+   the Intel renderer prints negative disp32 values as positive magnitudes
+   (`[RIP+0xffffe7e3]` = −0x181d); xrefs data refs and dataflow targets
+   were wrong for backwards references. Shared `disasm.RipTarget` recovers
+   polarity from sign and width.
+7. **Executable region excluded .plt/.init** (fixed): only `.text` was
+   decoded, so PLT stubs never became functions and import calls resolved
+   to raw addresses. The region now spans every executable section, with
+   INT3 gap padding.
+8. **Function bodies grew through unconditional jumps** (fixed): PLT stubs
+   end in `jmp [GOT]`, letting one seed swallow the entire `.plt`. Bodies
+   now terminate at jumps off the fall-through path.
+9. **ELF magic with unparseable content errored** (fixed): such files now
+   degrade to RAW per the honest-degradation contract instead of failing.
 
 ## 6. Security considerations for aksum itself
 
