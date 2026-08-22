@@ -26,9 +26,27 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - Static security checks: missing hardening properties, writable+executable
   segments, dangerous imports, weak-crypto and sensitive-string signals,
   process-execution attack surface
+- Intra-procedural dataflow engine: call-site argument tracking over
+  registers and stack slots, PLT stubs resolved to import names via
+  relocations, string arguments recovered where statically materialized
+- Validation pass: mechanical confidence escalation CANDIDATE/SUSPECTED ->
+  VALIDATED when resolved call sites corroborate a finding, with appended
+  callsite evidence (bounded, deterministic ordering)
+- `surface` command: aggregated attack-surface report — entry points,
+  security-relevant import categories, exports and string-class summaries
+- Dynamic-analysis architecture: mechanically validated safety policy,
+  auditable execution-plan JSON (`dynamic plan`), Sandbox interface;
+  this build bundles no executor and `dynamic run` refuses honestly
 - `analyze` pipeline command with terminal report, schema_version-1.0 JSON,
   `--report` file output, `--min-severity` filter, JSONL event stream
 - Exit-code contract: 0 success, 1 runtime, 2 usage, 3 unsupported target,
   130 interrupted
 - Cross-platform release pipeline (linux/darwin/windows, amd64/arm64) with
   SHA256SUMS verification
+
+### Fixed
+- `strings` now honors RAW degradation: unknown containers and ELF files
+  whose deep parse fails scan as a single `<raw>` pseudo-section instead
+  of being refused
+- Planning dynamic analysis of an unidentified target exits 3 (unsupported)
+  rather than 2 (usage), matching the exit-code contract
