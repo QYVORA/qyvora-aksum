@@ -105,7 +105,7 @@ assess.`,
 		return usageError{err}
 	})
 
-	root.AddCommand(newVersionCmd(), newAnalyzeCmd(), newDynamicCmd())
+	root.AddCommand(newVersionCmd(), newAnalyzeCmd(), newDynamicCmd(), newUpdatesCmd())
 	registerTargetCommands(root)
 	registerCodeCommands(root)
 	return root

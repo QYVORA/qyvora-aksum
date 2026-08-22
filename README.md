@@ -178,6 +178,19 @@ git clone https://github.com/QYVORA/qyvora-aksum && cd qyvora-aksum
 make install-user     # ~/.local/bin, no sudo required
 ```
 
+## Updating
+
+```bash
+aksum updates         # `aksum update` works as an alias
+```
+
+Checks the installed version against the latest official QYVORA GitHub
+release, downloads the artifact for your platform, verifies its SHA-256
+against the published `SHA256SUMS`, and swaps the binary in atomically.
+Downgrades are refused and any failure leaves your current binary untouched —
+no Go toolchain or Git required. See [docs/installation.md](docs/installation.md)
+for details.
+
 ## Supported targets
 
 ELF (32/64-bit, either endianness) is fully parsed today. Disassembly currently covers x86/x86-64; other architectures identify and enumerate but honestly refuse to disassemble (exit `3`). PE/Mach-O parsers are planned.
