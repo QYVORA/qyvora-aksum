@@ -83,20 +83,26 @@ AKSUM never guesses. Properties it cannot determine are reported as `unknown`. F
 |-------|---------|------------------|
 | 01 | `aksum binary` | Format, architecture, linking, PIE/NX/RELRO/canary/fortify — honest tri-state values |
 | 02 | `aksum sections / segments / symbols / imports` | Structural enumeration with permissions and security-relevant API classification |
-| 03 | `aksum strings` | Printable-string extraction with URL/path/command/crypto/credential classification |
+| 03 | `aksum strings` | Printable-string extraction with URL/path/command/crypto/credential classification — works on ELF *and* RAW files |
 | 04 | `aksum disassemble` | Linear-sweep disassembly (x86/x86-64) with resolved branch targets |
 | 05 | `aksum functions` | Multi-source function discovery: symbols + entry point + call targets, each with provenance and confidence |
 | 06 | `aksum calls / cfg` | Direct-call graph and per-function basic-block metrics (blocks, edges, loops, unreachable blocks) |
 | 07 | `aksum xrefs` | Cross-references to code addresses and data strings (`--addr`, `--string`) |
-| 08 | `aksum analyze` | The full pipeline: every static rule, deduplicated findings, severity/confidence summary |
+| 08 | `aksum analyze` | Full pipeline: dataflow-resolved call sites, every static rule, validation escalation, deduplicated findings, severity/confidence summary |
+| 09 | `aksum surface` | Attack-surface aggregation: entry points, risky import categories, exports, string classes |
+
+The analyze pipeline resolves PLT stubs to real import names via
+relocations, tracks call-site arguments through registers and stack slots,
+and escalates findings to `VALIDATED` only when a statically resolved call
+site corroborates them.
 
 ## Findings model
 
 Every finding carries:
 
-- **Confidence** — `OBSERVED` (read directly from the file), `CANDIDATE` (concrete signal needing review), `SUSPECTED` (pattern match that may be incidental), `VALIDATED` (corroborated by multiple independent signals), `CONFIRMED` (dynamically exercised).
+- **Confidence** — `OBSERVED` (read directly from the file), `CANDIDATE` (concrete signal needing review), `SUSPECTED` (pattern match that may be incidental), `VALIDATED` (corroborated by independent evidence such as a resolved dangerous call site), `CONFIRMED` (dynamically exercised — reserved; no executor is bundled).
 - **Severity** — `info` → `critical`, rating potential impact if the weakness is real.
-- **Evidence** — machine-checkable records (property, import, string, segment) with locations.
+- **Evidence** — machine-checkable records (`property`, `import`, `string`, `segment`, `callsite`) with locations.
 - **Detection reason + validation guidance** — why it fired and what would confirm or clear it.
 
 Built-in rules cover missing NX/PIE/RELRO/canary, writable+executable segments, dangerous imports (`gets`, `strcpy`, `sprintf`, `system`, `popen`, …), weak-crypto and credential-shaped strings, and process-execution attack surface.
@@ -128,7 +134,26 @@ aksum analyze ./target --report report.json --min-severity low
 }
 ```
 
-An append-only JSONL event stream (`--events stdout|stderr|file`) mirrors progress for automation.
+An append-only JSONL event stream (`--events stdout|stderr|file`) mirrors the
+full analysis lifecycle for automation: `scan.started`, bracketed
+`phase.started`/`phase.completed` (strings, dataflow, checks),
+`validation.started`/`validation.completed`, `finding.discovered`,
+`report.generated`, `scan.completed`.
+
+## Documentation
+
+| Document | Purpose |
+|---|---|
+| [Getting started](docs/getting-started.md) | First identification and assessment |
+| [Installation](docs/installation.md) | Installer and building from source |
+| [CLI reference](docs/cli.md) | Every command and flag |
+| [Architecture](docs/architecture.md) | Package layout, pipeline, dataflow design |
+| [Findings](docs/findings.md) | Rule families, confidence model, IDs |
+| [Validation](docs/validation.md) | How findings earn VALIDATED |
+| [Reporting](docs/reporting.md) | JSON report, event stream, exit codes |
+| [Security model](docs/security-model.md) | Static-only boundaries, dynamic safety architecture |
+| [Development](docs/development.md) | Testing conventions, adding rules/decoders |
+| [Roadmap](docs/roadmap.md) | Shipped, planned, reserved |
 
 ## Exit codes
 
