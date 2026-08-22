@@ -56,7 +56,11 @@ func Open(path string) (*binary.Target, error) {
 	case magic[0] == 0x7f && magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F':
 		t.Format = binary.FormatELF
 		if err := elf.Identify(t, fa); err != nil {
-			return nil, err
+			// Magic matched but content is unparseable (truncated, corrupt
+			// tables). Degrade honestly to RAW — strings-only analysis
+			// remains possible and identification is reported as
+			// unavailable rather than half-guessed.
+			t = &binary.Target{Path: path, Size: st.Size(), SHA256: t.SHA256, Format: binary.FormatRaw}
 		}
 	default:
 		// Honest limitation: no parser for this container yet. Strings-only
