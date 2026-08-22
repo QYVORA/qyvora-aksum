@@ -224,6 +224,14 @@ func growBodies(seeds *seedSet, insts []disasm.Instruction, opts Options) []*Fun
 			switch in.Flow {
 			case disasm.FlowRet, disasm.FlowHlt:
 				goto done
+			case disasm.FlowJmp:
+				// An unconditional jump away from the fall-through path ends
+				// the body: what follows linearly is not this function's
+				// straight-line code (next PLT entry, cold patch, padding).
+				// Only jmp-to-next continues the sweep.
+				if !in.HasTarget || in.Target != in.Addr+uint64(in.Size) {
+					goto done
+				}
 			}
 		}
 	done:
