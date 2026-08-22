@@ -42,8 +42,8 @@ func Execute() int {
 
 func newRootCmd() *cobra.Command {
 	root := &cobra.Command{
-		Use:           "aksum",
-		Short:         "Binary security assessment & reverse-engineering platform",
+		Use:   "aksum",
+		Short: "Binary security assessment & reverse-engineering platform",
 		Long: `aksum is a terminal-first binary-security assessment platform.
 
 It identifies a binary, enumerates its structure (sections, segments,

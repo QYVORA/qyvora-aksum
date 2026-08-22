@@ -208,8 +208,8 @@ func newImportsCmd() *cobra.Command {
 			groups := classifyImports(imports)
 			if newPrinter().Format() == "json" {
 				return json.NewEncoder(os.Stdout).Encode(map[string]any{
-					"total":     len(imports),
-					"groups":    groups,
+					"total":         len(imports),
+					"groups":        groups,
 					"uncategorized": uncategorizedNames(imports),
 				})
 			}

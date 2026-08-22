@@ -32,9 +32,9 @@ const (
 type Property int
 
 const (
-	PropertyUnknown Property = iota // not determinable from the file
-	PropertyEnabled                 // property present/enabled
-	PropertyDisabled                // property demonstrably absent/disabled
+	PropertyUnknown  Property = iota // not determinable from the file
+	PropertyEnabled                  // property present/enabled
+	PropertyDisabled                 // property demonstrably absent/disabled
 )
 
 func (p Property) String() string {

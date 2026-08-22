@@ -27,13 +27,13 @@ type Section struct {
 
 // Segment is one program-header entry.
 type Segment struct {
-	Type       string `json:"type"`
-	Flags      string `json:"flags"` // rwx
-	Offset     uint64 `json:"offset"`
+	Type        string `json:"type"`
+	Flags       string `json:"flags"` // rwx
+	Offset      uint64 `json:"offset"`
 	VirtualAddr uint64 `json:"vaddr"`
-	FileSize   uint64 `json:"filesz"`
-	MemSize    uint64 `json:"memsz"`
-	Alignment  uint64 `json:"align"`
+	FileSize    uint64 `json:"filesz"`
+	MemSize     uint64 `json:"memsz"`
+	Alignment   uint64 `json:"align"`
 }
 
 // Symbol is one symbol-table entry.
@@ -41,17 +41,17 @@ type Symbol struct {
 	Name    string `json:"name"`
 	Value   uint64 `json:"value"`
 	Size    uint64 `json:"size"`
-	Kind    string `json:"kind"` // func | object | other
+	Kind    string `json:"kind"`  // func | object | other
 	Scope   string `json:"scope"` // global | local | weak
 	Defined bool   `json:"defined"`
 }
 
 // Import is one imported (undefined, dynamically bound) symbol.
 type Import struct {
-	Name       string `json:"name"`
-	Version    string `json:"version,omitempty"`
-	FromNeeded string `json:"from_library,omitempty"`
-	Unclassified bool `json:"-"`
+	Name         string `json:"name"`
+	Version      string `json:"version,omitempty"`
+	FromNeeded   string `json:"from_library,omitempty"`
+	Unclassified bool   `json:"-"`
 }
 
 // Export is one exported dynamic symbol.
@@ -64,9 +64,9 @@ type Export struct {
 
 // Reloc is one relocation entry.
 type Reloc struct {
-	Offset  uint64 `json:"offset"`
-	Type    string `json:"type"`
-	Symbol  string `json:"symbol,omitempty"`
+	Offset uint64 `json:"offset"`
+	Type   string `json:"type"`
+	Symbol string `json:"symbol,omitempty"`
 }
 
 // Image bundles the file handle with its identified Target for the

@@ -20,13 +20,13 @@ import (
 
 // Phase names used in the [PHASE] slot.
 const (
-	PhaseIdentify  = "IDENTIFY"
-	PhaseEnum      = "ENUM"
-	PhaseAnalysis  = "ANALYSIS"
-	PhaseValidate  = "VALIDATE"
-	PhaseDynamic   = "DYNAMIC"
-	PhaseFindings  = "FINDINGS"
-	PhaseReport    = "REPORT"
+	PhaseIdentify = "IDENTIFY"
+	PhaseEnum     = "ENUM"
+	PhaseAnalysis = "ANALYSIS"
+	PhaseValidate = "VALIDATE"
+	PhaseDynamic  = "DYNAMIC"
+	PhaseFindings = "FINDINGS"
+	PhaseReport   = "REPORT"
 )
 
 // Printer writes phase-tagged terminal lines. It is safe for concurrent use

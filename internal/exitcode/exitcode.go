@@ -12,9 +12,9 @@
 package exitcode
 
 const (
-	Success        = 0
-	Runtime        = 1
-	Usage          = 2
-	Unsupported    = 3
-	Interrupted    = 130
+	Success     = 0
+	Runtime     = 1
+	Usage       = 2
+	Unsupported = 3
+	Interrupted = 130
 )

@@ -42,10 +42,10 @@ const (
 // Str is one extracted string with its location.
 type Str struct {
 	Value    string `json:"value"`
-	Offset   uint64 `json:"offset"`    // file offset
-	Address  uint64 `json:"address"`   // virtual address when mapped
+	Offset   uint64 `json:"offset"`  // file offset
+	Address  uint64 `json:"address"` // virtual address when mapped
 	Section  string `json:"section"`
-	Length   int    `json:"length"` // bytes
+	Length   int    `json:"length"`   // bytes
 	Encoding string `json:"encoding"` // ascii | utf8 | utf16le
 }
 
@@ -58,20 +58,20 @@ type Classified struct {
 
 // Options bound the scan (resource limits; spec section 49).
 type Options struct {
-	MinLength int // minimum printable run to report
+	MinLength  int // minimum printable run to report
 	MaxStrings int // hard cap on reported strings (0 = unlimited)
-	UTF16     bool
+	UTF16      bool
 }
 
 var (
-	reURL   = regexp.MustCompile(`(?:https?|ftp|wss?)://[^\s\x00"'<>]{4,}`)
-	reIPv4  = regexp.MustCompile(`\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b`)
-	rePath  = regexp.MustCompile(`(?:/[A-Za-z0-9._\-]{2,}){2,}|\b(?:etc|usr|bin|sbin|var|tmp|home|proc|sys)(?:/[A-Za-z0-9._\-]+)+`)
-	reCmd   = regexp.MustCompile(`\b(?:/bin/(?:sh|bash)|sh -c|system\s*\(|popen\s*\(|cmd\.exe)\b`)
-	reSQL   = regexp.MustCompile(`(?i)\b(?:select\s+.+\s+from\s+|insert\s+into\s+|update\s+\w+\s+set\s+|delete\s+from\s+)\b`)
-	reAuth  = regexp.MustCompile(`(?i)^(?:pass(word)?|passwd|user(name)?|login|token|secret|api[-_]?key|auth)`)
-	reEnv   = regexp.MustCompile(`^[A-Z][A-Z0-9_]{2,}$`)
-	reKey   = regexp.MustCompile(`(?i)(?:BEGIN (?:RSA )?PRIVATE KEY|(?:sk|pk)_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,})`)
+	reURL    = regexp.MustCompile(`(?:https?|ftp|wss?)://[^\s\x00"'<>]{4,}`)
+	reIPv4   = regexp.MustCompile(`\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b`)
+	rePath   = regexp.MustCompile(`(?:/[A-Za-z0-9._\-]{2,}){2,}|\b(?:etc|usr|bin|sbin|var|tmp|home|proc|sys)(?:/[A-Za-z0-9._\-]+)+`)
+	reCmd    = regexp.MustCompile(`\b(?:/bin/(?:sh|bash)|sh -c|system\s*\(|popen\s*\(|cmd\.exe)\b`)
+	reSQL    = regexp.MustCompile(`(?i)\b(?:select\s+.+\s+from\s+|insert\s+into\s+|update\s+\w+\s+set\s+|delete\s+from\s+)\b`)
+	reAuth   = regexp.MustCompile(`(?i)^(?:pass(word)?|passwd|user(name)?|login|token|secret|api[-_]?key|auth)`)
+	reEnv    = regexp.MustCompile(`^[A-Z][A-Z0-9_]{2,}$`)
+	reKey    = regexp.MustCompile(`(?i)(?:BEGIN (?:RSA )?PRIVATE KEY|(?:sk|pk)_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,})`)
 	reCrypto = regexp.MustCompile(`(?i)\b(aes|rsa|ecdsa|ed25519|sha1|sha256|sha512|md5|hmac|blowfish|chacha20|curve25519)(?:[-_ ]?(?:128|192|256|key|cert|sign))?`)
 )
 
@@ -123,11 +123,11 @@ func extractASCII(data []byte, fileOff, vaddr uint64, section string, minLen int
 			v := sanitizeRun(data[start:end])
 			if utf8.ValidString(v) || isASCII(v) {
 				out = append(out, Str{
-					Value: v,
-					Offset: fileOff + uint64(start),
-					Address: addrAt(vaddr, fileOff, fileOff+uint64(start)),
-					Section: section,
-					Length: n,
+					Value:    v,
+					Offset:   fileOff + uint64(start),
+					Address:  addrAt(vaddr, fileOff, fileOff+uint64(start)),
+					Section:  section,
+					Length:   n,
 					Encoding: encodingOf(v),
 				})
 			}
@@ -169,11 +169,11 @@ func extractUTF16LE(data []byte, fileOff, vaddr uint64, section string, minLen i
 		if len(run) >= minLen {
 			v := string(run)
 			out = append(out, Str{
-				Value: v,
-				Offset: fileOff + uint64(i),
-				Address: addrAt(vaddr, fileOff, fileOff+uint64(i)),
-				Section: section,
-				Length: len(run) * 2,
+				Value:    v,
+				Offset:   fileOff + uint64(i),
+				Address:  addrAt(vaddr, fileOff, fileOff+uint64(i)),
+				Section:  section,
+				Length:   len(run) * 2,
 				Encoding: "utf16le",
 			})
 			i = j + 2

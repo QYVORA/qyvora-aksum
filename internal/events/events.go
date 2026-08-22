@@ -33,12 +33,12 @@ const (
 	Error             = "error"
 	ReportGenerated   = "report.generated"
 
-	BinaryIdentified     = "binary.identified"
-	FunctionDiscovered   = "function.discovered"
-	StringDiscovered     = "string.discovered"
-	CandidateFound       = "candidate.found"
-	ValidationStarted    = "validation.started"
-	ValidationCompleted  = "validation.completed"
+	BinaryIdentified    = "binary.identified"
+	FunctionDiscovered  = "function.discovered"
+	StringDiscovered    = "string.discovered"
+	CandidateFound      = "candidate.found"
+	ValidationStarted   = "validation.started"
+	ValidationCompleted = "validation.completed"
 )
 
 // Level values for the envelope's level field.
