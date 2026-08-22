@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AKSUM
+GenericName=Binary Security Assessment Platform
+Comment=Binary security assessment & reverse-engineering platform
+Exec=@PREFIX@/bin/aksum
+Icon=@PREFIX@/share/icons/hicolor/512x512/apps/aksum.png
+Terminal=true
+Categories=Utility;Development;Security;
+Keywords=binary;elf;disassembly;reverse-engineering;security;analysis;findings;hardening;
