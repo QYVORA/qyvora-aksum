@@ -68,25 +68,48 @@ seen, why the rule fired, and what validation would confirm it.`,
 				return usagef("invalid --min-severity %q (info, low, medium, high, critical)", minSev)
 			}
 
+			// Event stream: opened before any stage so every phase is
+			// bracketed even on early failure.
+			var stream *events.Stream
+			if w, closer, ok := eventsWriter(); ok {
+				defer closer() //nolint:errcheck // best-effort log close
+				stream = events.NewStream(w)
+			}
+			emit := func(name string, data map[string]any) {
+				if stream != nil {
+					stream.Emit(events.LevelInfo, name, data)
+				}
+			}
+			phase := func(name string, start bool, data map[string]any) {
+				if start {
+					emit(events.PhaseStarted, map[string]any{"phase": name})
+				} else {
+					if data != nil {
+						data["phase"] = name
+					}
+					emit(events.PhaseCompleted, data)
+				}
+			}
+
+			emit(events.ScanStarted, map[string]any{"target": path})
+
 			ac, err := openAnalysis(path)
 			if err != nil {
 				return err
 			}
 			defer ac.Close() //nolint:errcheck // read-only
 
+			phase("strings", true, nil)
 			extracted := strscan.Extract(ac.im.RawFile(), strscan.Options{})
-			if w, closer, ok := eventsWriter(); ok {
-				stream := events.NewStream(w)
-				defer closer() //nolint:errcheck // best-effort log close
-				stream.Emit("info", "analysis.started", map[string]any{
-					"target": path, "strings": len(extracted),
-				})
-			}
 			classified := strscan.ClassifyAll(extracted)
+			phase("strings", false, map[string]any{"extracted": len(extracted), "classified": len(classified)})
 
 			// Stage 15/19-21: resolve call-site arguments, then let the
 			// validation pass corroborate rule findings with that evidence.
+			phase("dataflow", true, nil)
 			sites := dataflow.New(ac.im.Relocs(), ac.funcs, classified).AnalyzeAll(ac.funcs)
+			phase("dataflow", false, map[string]any{"call_sites_resolved": len(sites)})
+
 			ctx := &checks.Context{
 				Target:    ac.im.Target,
 				Imports:   ac.im.Imports(),
@@ -94,15 +117,26 @@ seen, why the rule fired, and what validation would confirm it.`,
 				Strings:   classified,
 				CallSites: sites,
 			}
+			phase("checks", true, nil)
 			found, err := checks.Run(ctx)
 			if err != nil {
 				return err
 			}
+			phase("checks", false, map[string]any{"findings": len(found)})
+
+			emit(events.ValidationStarted, map[string]any{"findings": len(found), "call_sites": len(sites)})
 			vres := validation.Validate(found, sites)
+			emit(events.ValidationCompleted, map[string]any{"validated": vres.Upgraded, "corroborated_existing": vres.Corroborated})
+
 			kept := make([]findings.Finding, 0, len(found))
 			for _, f := range found {
 				if f.Severity.Rank() >= min {
 					kept = append(kept, f)
+					emit(events.FindingDiscovered, map[string]any{
+						"id": f.ID, "rule": f.Rule,
+						"severity": string(f.Severity), "confidence": string(f.Confidence),
+						"title": f.Title,
+					})
 				}
 			}
 
@@ -125,9 +159,12 @@ seen, why the rule fired, and what validation would confirm it.`,
 
 			p := newPrinter()
 			if p.Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(report)
+				if err := json.NewEncoder(os.Stdout).Encode(report); err != nil {
+					return err
+				}
+			} else {
+				renderAnalyze(p, &report)
 			}
-			renderAnalyze(p, &report)
 			if outPath != "" {
 				data, merr := json.MarshalIndent(report, "", "  ")
 				if merr != nil {
@@ -137,7 +174,16 @@ seen, why the rule fired, and what validation would confirm it.`,
 					return fmt.Errorf("write report: %w", werr)
 				}
 				p.Info("REPORT", "wrote "+outPath)
+				emit(events.ReportGenerated, map[string]any{"path": outPath, "findings": len(kept)})
 			}
+			emit(events.ScanCompleted, map[string]any{
+				"target":              path,
+				"functions":           report.Summary.Functions,
+				"strings_extracted":   report.Summary.StringsExtracted,
+				"call_sites_resolved": report.Summary.CallSitesResolved,
+				"findings_reported":   len(kept),
+				"findings_validated":  report.Summary.ValidatedCount,
+			})
 			return nil
 		},
 	}
