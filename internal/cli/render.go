@@ -34,6 +34,14 @@ func emit(_ any, v any) error {
 		printSegmentTable(rows)
 	case []structure.Symbol:
 		printSymbolTable(rows)
+	case []funcSummary:
+		printFuncTable(rows)
+	case []callEdge:
+		printCallEdges(rows)
+	case []cfgReport:
+		printCfgReports(rows)
+	case []xrefView:
+		printXrefTable(rows)
 	default:
 		data, err := json.MarshalIndent(v, "", "  ")
 		if err != nil {

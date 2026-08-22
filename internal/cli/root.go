@@ -28,6 +28,17 @@ func usagef(format string, a ...any) error {
 	return usageError{fmt.Errorf(format, a...)}
 }
 
+// unsupportedError marks a validly invoked operation the current build
+// genuinely cannot perform on this target (e.g. no decoder for the
+// architecture). It maps to exit code 3 per the aksum contract.
+type unsupportedError struct{ msg string }
+
+func unsupportedf(format string, a ...any) error {
+	return unsupportedError{fmt.Sprintf(format, a...)}
+}
+
+func (u unsupportedError) Error() string { return u.msg }
+
 var formatFlag string
 var quietFlag bool
 var eventsFlag string
@@ -96,6 +107,7 @@ assess.`,
 
 	root.AddCommand(newVersionCmd())
 	registerTargetCommands(root)
+	registerCodeCommands(root)
 	return root
 }
 
@@ -107,9 +119,12 @@ func executeArgs(ctx context.Context, args []string) int {
 	if err := root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err.Error())
 		var ue usageError
+		var use unsupportedError
 		switch {
 		case errors.As(err, &ue):
 			return exitcode.Usage
+		case errors.As(err, &use):
+			return exitcode.Unsupported
 		case errors.Is(err, context.Canceled):
 			return exitcode.Interrupted
 		default:
