@@ -291,3 +291,22 @@ func isLiteralIP(v string) bool {
 	}
 	return net.ParseIP(tok) != nil && strings.Contains(tok, ".") // IPv4-shaped only; bare "::" noise excluded
 }
+
+// ExtractRaw scans arbitrary bytes as a single pseudo-section named
+// "<raw>" at virtual address zero. It backs the strings command's
+// degraded mode for files without a container parser: no section
+// filtering is possible, so every printable run in the file is
+// considered.
+func ExtractRaw(data []byte, opts Options) []Str {
+	if opts.MinLength < 4 {
+		opts.MinLength = 4
+	}
+	out := extractASCII(data, 0, 0, "<raw>", opts.MinLength)
+	if opts.UTF16 {
+		out = append(out, extractUTF16LE(data, 0, 0, "<raw>", opts.MinLength)...)
+	}
+	if opts.MaxStrings > 0 && len(out) > opts.MaxStrings {
+		out = out[:opts.MaxStrings]
+	}
+	return out
+}

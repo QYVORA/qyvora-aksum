@@ -232,12 +232,28 @@ func newStringsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			im, err := structure.Open(path)
+			t, err := loader.Open(path)
 			if err != nil {
 				return mapLoadErr(err)
 			}
-			defer im.Close() //nolint:errcheck // read-only
-			all := strscan.Extract(im.RawFile(), strscan.Options{MinLength: minLen, UTF16: utf16, MaxStrings: max})
+			opts := strscan.Options{MinLength: minLen, UTF16: utf16, MaxStrings: max}
+			var all []strscan.Str
+			if t.Format == binary.FormatELF {
+				im, err := structure.Open(path)
+				if err != nil {
+					return mapLoadErr(err)
+				}
+				defer im.Close() //nolint:errcheck // read-only
+				all = strscan.Extract(im.RawFile(), opts)
+			} else {
+				// No container parser: degrade to a whole-file scan so the
+				// strings command keeps its promise on RAW targets.
+				data, err := os.ReadFile(path)
+				if err != nil {
+					return mapLoadErr(err)
+				}
+				all = strscan.ExtractRaw(data, opts)
+			}
 			classified := strscan.ClassifyAll(all)
 			if newPrinter().Format() == "json" {
 				return json.NewEncoder(os.Stdout).Encode(map[string]any{
