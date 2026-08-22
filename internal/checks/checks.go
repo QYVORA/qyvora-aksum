@@ -13,16 +13,18 @@ import (
 	strscan "github.com/QYVORA/qyvora-aksum/internal/analysis/strings"
 	"github.com/QYVORA/qyvora-aksum/internal/analysis/structure"
 	"github.com/QYVORA/qyvora-aksum/internal/binary"
+	"github.com/QYVORA/qyvora-aksum/internal/dataflow"
 	"github.com/QYVORA/qyvora-aksum/internal/findings"
 	"github.com/QYVORA/qyvora-aksum/internal/security/class"
 )
 
 // Context bundles everything rules may inspect.
 type Context struct {
-	Target   *binary.Target
-	Imports  []structure.Import
-	Segments []structure.Segment
-	Strings  []strscan.Classified
+	Target    *binary.Target
+	Imports   []structure.Import
+	Segments  []structure.Segment
+	Strings   []strscan.Classified
+	CallSites []dataflow.CallSite // statically-resolved call sites (may be nil)
 }
 
 // Rule is one named check with a stable identifier.
@@ -57,6 +59,7 @@ func init() {
 	register("hardening-properties", checkHardening)
 	register("writable-executable-segment", checkWritableExec)
 	register("dangerous-imports", checkDangerousImports)
+	register("dangerous-call-sites", checkDangerousCallSites)
 	register("weak-crypto-signals", checkWeakCrypto)
 	register("sensitive-strings", checkSensitiveStrings)
 	register("process-execution-surface", checkProcessExecution)
@@ -163,8 +166,45 @@ func checkDangerousImports(ctx *Context) ([]findings.Finding, error) {
 	return out, nil
 }
 
-// ---- weak / legacy crypto signals --------------------------------------
+// ---- dangerous call sites (dataflow-corroborated) -----------------------
 
+// checkDangerousCallSites upgrades dangerous-import reporting when the
+// dataflow engine resolved a concrete call site that passes a statically
+// known string to the risky API. Reachability plus argument data moves the
+// finding from CANDIDATE (mere presence) to VALIDATED with code evidence.
+func checkDangerousCallSites(ctx *Context) ([]findings.Finding, error) {
+	var out []findings.Finding
+	for _, d := range dangerousImports {
+		for _, site := range ctx.CallSites {
+			if site.Callee != d.symbol {
+				continue
+			}
+			arg := ""
+			for _, a := range site.Args {
+				if a.Kind == dataflow.KindString && len(a.Text) > len(arg) {
+					arg = a.Text
+				}
+			}
+			if arg == "" {
+				continue // presence-level evidence is covered by dangerous-imports
+			}
+			out = append(out, findings.New("dangerous-call-"+d.symbol,
+				fmt.Sprintf("%s() called with static string %q", d.symbol, truncateStr(arg, 48)),
+				"memory-safety", findings.SevHigh, findings.ConfValidated).
+				Describe(d.desc+" The call site was resolved by intra-procedural dataflow; the argument value is fixed in the binary.",
+					fmt.Sprintf("%s (at %#x) calls %s with statically-resolved argument %q.",
+						site.Caller, site.Addr, d.symbol, truncateStr(arg, 64)),
+					"Confirm the argument source is not attacker-influenced at runtime.").
+				Add("import", d.symbol, "").
+				Add("callsite", fmt.Sprintf("%#x", site.Addr),
+					fmt.Sprintf("caller=%s", site.Caller)).
+				Add("string", fmt.Sprintf("%q", arg), "").Build())
+		}
+	}
+	return out, nil
+}
+
+// ---- weak / legacy crypto signals --------------------------------------
 var weakCryptoMarkers = []struct {
 	token string
 	note  string
