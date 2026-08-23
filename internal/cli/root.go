@@ -12,7 +12,9 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
+	"github.com/QYVORA/qyvora-aksum/internal/console"
 	"github.com/QYVORA/qyvora-aksum/internal/exitcode"
 	"github.com/QYVORA/qyvora-aksum/internal/version"
 )
@@ -57,6 +59,10 @@ func newRootCmd() *cobra.Command {
 		Short: "Binary security assessment & reverse-engineering platform",
 		Long: `aksum is a terminal-first binary-security assessment platform.
 
+Run it with no arguments to enter an interactive console session
+(contextual prompt, command history, tab completion), or use the
+same commands one-shot: aksum analyze <target>, aksum strings ...
+
 It identifies a binary, enumerates its structure (sections, segments,
 symbols, imports), analyzes strings and code, discovers functions,
 builds call/control-flow graphs, classifies security-relevant APIs,
@@ -84,7 +90,18 @@ assess.`,
 			if len(args) > 0 {
 				return usagef("unknown command %q (try 'aksum --help')", args[0])
 			}
-			return cmd.Help()
+			// No subcommand: enter the interactive console (a TTY gets line
+			// editing and a banner; a pipe runs the same commands from a
+			// script). Machine-oriented global flags keep classic behavior.
+			if formatFlag == "json" || eventsFlag != "" || quietFlag {
+				return cmd.Help()
+			}
+			console.New(console.Options{
+				Interactive: term.IsTerminal(int(os.Stdin.Fd())),
+				Out:         cmd.OutOrStdout(),
+				Err:         cmd.ErrOrStderr(),
+			}).Run(cmd.Context())
+			return nil
 		},
 		// Unknown subcommands are usage errors (exit 2).
 		Args: func(_ *cobra.Command, args []string) error {

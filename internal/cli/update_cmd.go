@@ -12,29 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/QYVORA/qyvora-aksum/internal/selfupdate"
-	"github.com/QYVORA/qyvora-aksum/internal/version"
+	"github.com/QYVORA/qyvora-aksum/internal/updatecfg"
 )
-
-// releaseConfig pins the updater to aksum's official release source: the
-// QYVORA/qyvora-aksum GitHub repository and nothing else.
-func releaseConfig() selfupdate.Config {
-	return selfupdate.Config{
-		Owner:    "QYVORA",
-		Repo:     "qyvora-aksum",
-		ToolName: "aksum",
-		CurrentVersion: func() string {
-			return version.Version
-		},
-		ArtifactName: func(goos, goarch string) string {
-			name := fmt.Sprintf("aksum-%s-%s", goos, goarch)
-			if goos == "windows" {
-				name += ".exe"
-			}
-			return name
-		},
-		ChecksumAsset: func(string) string { return "SHA256SUMS" },
-	}
-}
 
 func newUpdatesCmd() *cobra.Command {
 	return &cobra.Command{
@@ -57,7 +36,7 @@ No Go toolchain, Git, or source checkout is required.`,
 				opts.Quiet = true
 			}
 
-			res, err := selfupdate.Run(cmd.Context(), releaseConfig(), opts)
+			res, err := selfupdate.Run(cmd.Context(), updatecfg.Config(), opts)
 			if jsonMode {
 				payload := map[string]string{
 					"framework": "aksum",

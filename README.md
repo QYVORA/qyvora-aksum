@@ -96,6 +96,42 @@ relocations, tracks call-site arguments through registers and stack slots,
 and escalates findings to `VALIDATED` only when a statically resolved call
 site corroborates them.
 
+## Interactive console
+
+Run `aksum` with no subcommand and you get an interactive session instead of
+a wall of flags — same engine, same commands, one persistent target:
+
+```
+$ aksum
+
+  ╔══════════════════════════════════════════════╗
+  ║                    AKSUM                     ║
+  ║   Binary Security & Reverse Engineering      ║
+  ║                    QYVORA                    ║
+  ╚══════════════════════════════════════════════╝
+
+aksum > open /usr/bin/ls
+[+] Target loaded
+aksum [/usr/bin/ls] > functions --min-confidence high
+aksum [/usr/bin/ls] > xrefs --string "Usage"
+aksum [/usr/bin/ls] > analyze --min-severity low
+aksum [/usr/bin/ls] > quit
+```
+
+- **Contextual prompt** shows the loaded target; `open` caches the analysis
+  context so every later command skips re-parsing.
+- **Tab completion** for commands, aliases (`?`, `b`, `syms`, `dis`, …), and
+  per-command flags; **arrow-key history** persists across sessions in
+  `~/.aksum_history`.
+- **`help <command>`** documents usage, aliases, and flags; unknown commands
+  suggest the closest real command; every result renders as a clean table,
+  or append `--json` anywhere for machine-readable output.
+- **Scriptable**: pipe a script on stdin (`echo 'help' | aksum`) — prompts
+  are never echoed, sessions stay side-effect free.
+
+Every one-shot CLI command keeps working unchanged. See
+[docs/console.md](docs/console.md) for the full reference.
+
 ## Findings model
 
 Every finding carries:
@@ -147,6 +183,7 @@ full analysis lifecycle for automation: `scan.started`, bracketed
 | [Getting started](docs/getting-started.md) | First identification and assessment |
 | [Installation](docs/installation.md) | Installer and building from source |
 | [CLI reference](docs/cli.md) | Every command and flag |
+| [Console](docs/console.md) | Interactive session: prompt, history, completion |
 | [Architecture](docs/architecture.md) | Package layout, pipeline, dataflow design |
 | [Findings](docs/findings.md) | Rule families, confidence model, IDs |
 | [Validation](docs/validation.md) | How findings earn VALIDATED |

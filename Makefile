@@ -1,6 +1,6 @@
 BINARY := aksum
 VERSION ?= dev
-GOFLAGS := -ldflags="-s -w -X github.com/QYVORA/qyvora-aksum/internal/version.Version=$(VERSION) -trimpath"
+GOFLAGS := -trimpath -ldflags="-s -w -X github.com/QYVORA/qyvora-aksum/internal/version.Version=$(VERSION)"
 
 PREFIX ?= /usr/local
 DESTDIR ?=

@@ -1,5 +1,9 @@
 # CLI Reference
 
+Running `aksum` with **no subcommand** opens the [interactive console](console.md)
+— same engine and commands in a persistent session. Every command below also
+works one-shot.
+
 Global flags (apply to every command):
 
 | Flag | Values | Purpose |

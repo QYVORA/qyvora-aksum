@@ -10,6 +10,7 @@ import (
 	strscan "github.com/QYVORA/qyvora-aksum/internal/analysis/strings"
 	"github.com/QYVORA/qyvora-aksum/internal/analysis/structure"
 	"github.com/QYVORA/qyvora-aksum/internal/binary"
+	"github.com/QYVORA/qyvora-aksum/internal/engine"
 	"github.com/QYVORA/qyvora-aksum/internal/loader"
 	"github.com/QYVORA/qyvora-aksum/internal/output"
 )
@@ -40,6 +41,12 @@ func loadTarget(path string) (*binary.Target, error) {
 	return loader.Open(path)
 }
 
+// renderTarget prints the binary-identification property table.
+func renderTarget(p *output.Printer, t *binary.Target) {
+	p.Info("IDENTIFY", "Target identified")
+	engine.RenderTargetProperties(os.Stdout, t)
+}
+
 func newBinaryCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "binary <target>",
@@ -65,62 +72,6 @@ Values that cannot be determined from the file are reported as
 			renderTarget(p, t)
 			return nil
 		},
-	}
-}
-
-func prop(name string, v binary.Property) string {
-	switch v {
-	case binary.PropertyEnabled:
-		return name + ": Enabled"
-	case binary.PropertyDisabled:
-		return name + ": Disabled"
-	default:
-		return name + ": Unknown"
-	}
-}
-
-func symbolsProp(stripped binary.Property) string {
-	// The user-facing question is "are symbols present?" while Target stores
-	// "stripped"; invert for display.
-	switch stripped {
-	case binary.PropertyEnabled:
-		return "Symbols: Stripped"
-	case binary.PropertyDisabled:
-		return "Symbols: Present"
-	default:
-		return "Symbols: Unknown"
-	}
-}
-
-func renderTarget(p *output.Printer, t *binary.Target) {
-	p.Info("IDENTIFY", "Target: "+t.Path)
-	if t.Format == binary.FormatRaw {
-		p.Info("IDENTIFY", "Format: unknown container (no parser); strings analysis only")
-		return
-	}
-	p.Info("IDENTIFY", "Format: "+t.Class+" ("+t.Type+")")
-	p.Info("IDENTIFY", "Architecture: "+string(t.Arch))
-	p.Info("IDENTIFY", "Endianness: "+string(t.Endianness))
-	p.Info("IDENTIFY", "OS/ABI: "+t.OSType)
-	p.Info("IDENTIFY", fmt.Sprintf("Entry point: %#x", t.Entry))
-	p.Info("IDENTIFY", "Linking: "+string(t.Linking))
-	p.Info("IDENTIFY", prop("PIE", t.PIE))
-	p.Info("IDENTIFY", prop("NX", t.NX))
-	p.Info("IDENTIFY", "RELRO: "+t.RELRO)
-	p.Info("IDENTIFY", prop("Canary", t.Canary))
-	p.Info("IDENTIFY", prop("Fortify", t.Fortify))
-	p.Info("IDENTIFY", symbolsProp(t.Stripped))
-	if t.Interpreter != "" {
-		p.Info("IDENTIFY", "Interpreter: "+t.Interpreter)
-	}
-	for _, lib := range t.Needed {
-		p.Info("IDENTIFY", "Library: "+lib)
-	}
-	if t.BuildID != "" {
-		p.Info("IDENTIFY", "Build ID: "+t.BuildID)
-	}
-	for _, h := range t.CompilerHints {
-		p.Info("IDENTIFY", "Hint: "+h)
 	}
 }
 
@@ -206,15 +157,15 @@ func newImportsCmd() *cobra.Command {
 			}
 			defer im.Close() //nolint:errcheck // read-only
 			imports := im.Imports()
-			groups := classifyImports(imports)
+			groups := engine.ClassifyImports(imports)
 			if newPrinter().Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(map[string]any{
+				return json.NewEncoder(os.Stdout).Encode(map[string]any{ //nolint:err113 // stable payload
 					"total":         len(imports),
 					"groups":        groups,
-					"uncategorized": uncategorizedNames(imports),
+					"uncategorized": engine.UncategorizedImports(imports),
 				})
 			}
-			renderClassifiedImports(imports, groups)
+			engine.RenderImports(os.Stdout, imports)
 			return nil
 		},
 	}
@@ -256,7 +207,7 @@ func newStringsCmd() *cobra.Command {
 			}
 			classified := strscan.ClassifyAll(all)
 			if newPrinter().Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(map[string]any{
+				return json.NewEncoder(os.Stdout).Encode(map[string]any{ //nolint:err113 // stable payload
 					"total":      len(all),
 					"strings":    all,
 					"classified": classified,
@@ -264,7 +215,7 @@ func newStringsCmd() *cobra.Command {
 			}
 			p := newPrinter()
 			p.Info("ANALYSIS", fmt.Sprintf("%d strings extracted, %d security-relevant", len(all), len(classified)))
-			printStringTable(classified)
+			engine.RenderStrings(os.Stdout, classified)
 			return nil
 		},
 	}
