@@ -56,9 +56,9 @@ type Console struct {
 
 	histPathOverride string
 
-	cancelMu sync.Mutex
-	opCtx    context.Context
-	opCancel context.CancelFunc
+	cancelMu    sync.Mutex
+	opCtx       context.Context
+	opCancel    context.CancelFunc
 	interrupted atomic.Bool
 }
 

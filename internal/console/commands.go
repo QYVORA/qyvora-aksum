@@ -122,7 +122,7 @@ and full description.`,
 			Summary: "Exit Aksum",
 			Usage:   "quit | exit",
 			Details: "Leaves the console cleanly (Ctrl+D does the same).",
-			Run: func(*Console, *Parsed) error { return errExit },
+			Run:     func(*Console, *Parsed) error { return errExit },
 		},
 
 		{

@@ -21,8 +21,8 @@ import (
 type Session struct {
 	Target *binary.Target // identified target (any supported format)
 
-	ctx      *engine.Context    // full code-analysis context (ELF only)
-	codeNote string             // why code analysis is unavailable, if so
+	ctx      *engine.Context // full code-analysis context (ELF only)
+	codeNote string          // why code analysis is unavailable, if so
 	report   *engine.AnalyzeReport
 	surface  *surface.Report
 }

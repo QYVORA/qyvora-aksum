@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/QYVORA/qyvora-aksum/internal/disasm"
-	x86dec "github.com/QYVORA/qyvora-aksum/internal/disasm/x86"
-	"github.com/QYVORA/qyvora-aksum/internal/functions"
 	strscan "github.com/QYVORA/qyvora-aksum/internal/analysis/strings"
 	"github.com/QYVORA/qyvora-aksum/internal/analysis/structure"
 	"github.com/QYVORA/qyvora-aksum/internal/binary"
+	"github.com/QYVORA/qyvora-aksum/internal/disasm"
+	x86dec "github.com/QYVORA/qyvora-aksum/internal/disasm/x86"
+	"github.com/QYVORA/qyvora-aksum/internal/functions"
 	"github.com/QYVORA/qyvora-aksum/internal/security/class"
 	"github.com/QYVORA/qyvora-aksum/internal/xrefs"
 )

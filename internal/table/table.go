@@ -46,7 +46,7 @@ var UnicodeStyle = Style{
 	Left: "│", Mid: "│", Right: "│", Vertical: "│",
 	BottomLeft: "└", BottomMid: "┴", BottomRight: "┘",
 	RowSepLeft: "├", RowSepMid: "┼", RowSepRight: "┤",
-	Ellipsis:   "…",
+	Ellipsis: "…",
 }
 
 // ASCIIStyle is the restricted-terminal fallback (dumb TERM, non-UTF-8

@@ -54,9 +54,9 @@ func parseErrf(format string, a ...any) error {
 
 // Parsed is one validated console command invocation.
 type Parsed struct {
-	Name  string            // canonical command name
-	Raw   string            // original line
-	Args  []string          // positional arguments
+	Name  string   // canonical command name
+	Raw   string   // original line
+	Args  []string // positional arguments
 	Flags map[string]flagValue
 	spec  map[string]FlagSpec
 }

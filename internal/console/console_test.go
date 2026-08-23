@@ -229,9 +229,9 @@ func TestCompleterCommandsAndFlags(t *testing.T) {
 
 func TestSessionLifecycleAndGuidance(t *testing.T) {
 	out, errW := runScript(t, strings.Join([]string{
-		"",            // blank line ignored
-		"# comment",   // comment ignored
-		"sections",    // no target -> guidance
+		"",          // blank line ignored
+		"# comment", // comment ignored
+		"sections",  // no target -> guidance
 		"open /definitely/not/here",
 		"quit",
 	}, "\n"))

@@ -43,6 +43,7 @@ vet:
 	go vet ./...
 
 lint:
+	gofmt -l . | tee /dev/stderr | (! read -r _)   # fail if any file needs formatting
 	golangci-lint run ./...
 
 verify: lint vet test-race build
