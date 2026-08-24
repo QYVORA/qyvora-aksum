@@ -71,7 +71,7 @@ sha256sum -c SHA256SUMS 2>/dev/null | grep aksum
 ```
 
 Every analysis run also anchors itself to the target's SHA-256 — see
-[Reporting](reporting.md) — so a report can always be tied to an exact input
+[Reporting](Reporting.md) — so a report can always be tied to an exact input
 file.
 
 ## Uninstall

@@ -31,6 +31,6 @@ when they land.
 ## Reserved
 
 - `CONFIRMED` confidence state — requires a dynamic-execution backend that
-  satisfies the [security model](security-model.md): mechanical policy
+  satisfies the [security model](Security-Model.md): mechanical policy
   bounds, deny-by-default network/write, identified targets only. The plan
   schema and Sandbox interface exist today; the executor does not.

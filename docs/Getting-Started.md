@@ -75,7 +75,7 @@ observations, not verdicts.
 
 Every command accepts `-f json`. For long-running pipelines add
 `--events <path|stderr>` to mirror progress as a JSONL event stream — see
-[Reporting](reporting.md). Exit codes are part of the contract:
+[Reporting](Reporting.md). Exit codes are part of the contract:
 
 | Code | Meaning |
 |------|---------|
@@ -89,4 +89,4 @@ Every command accepts `-f json`. For long-running pipelines add
 
 It never executes the target and never touches the network. Findings are
 candidate observations until independently corroborated — see
-[Findings](findings.md) and [Validation](validation.md).
+[Findings](Findings.md) and [Validation](Validation.md).

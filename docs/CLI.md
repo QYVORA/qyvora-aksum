@@ -1,6 +1,6 @@
 # CLI Reference
 
-Running `aksum` with **no subcommand** opens the [interactive console](console.md)
+Running `aksum` with **no subcommand** opens the [interactive console](Console.md)
 — same engine and commands in a persistent session. Every command below also
 works one-shot.
 
@@ -60,7 +60,7 @@ Flags: `--min-length N` (default 4) · `--utf16` (also scan UTF-16LE runs) ·
 
 Full pipeline: identify → strings → dataflow → checks → validation → report.
 Flags: `--min-severity info|low|medium|high|critical` · `--report path` ·
-`--events`. Emits the complete event lifecycle (see [Reporting](reporting.md)).
+`--events`. Emits the complete event lifecycle (see [Reporting](Reporting.md)).
 
 ### `aksum surface <target>`
 

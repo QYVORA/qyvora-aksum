@@ -46,7 +46,7 @@ When you fix a bug, add the test that would have caught it.
 3. If dataflow can corroborate it, teach `internal/validation` the pairing
    instead of escalating inside the rule.
 4. Add unit tests plus an integration assertion; update
-   [Findings](findings.md).
+   [Findings](Findings.md).
 
 ## Adding a decoder
 

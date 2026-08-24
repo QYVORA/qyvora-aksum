@@ -7,7 +7,7 @@ separate command to invoke.
 ## The rule
 
 A finding escalates only when **independent evidence** agrees with its claim.
-Today the independent signal is the [dataflow](architecture.md) engine's
+Today the independent signal is the [dataflow](Architecture.md) engine's
 resolved call sites:
 
 - a dangerous-import finding escalates when some call site resolves to that

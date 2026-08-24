@@ -130,7 +130,7 @@ aksum [/usr/bin/ls] > quit
   are never echoed, sessions stay side-effect free.
 
 Every one-shot CLI command keeps working unchanged. See
-[docs/console.md](docs/console.md) for the full reference.
+[docs/Console.md](docs/Console.md) for the full reference.
 
 ## Findings model
 
@@ -180,17 +180,17 @@ full analysis lifecycle for automation: `scan.started`, bracketed
 
 | Document | Purpose |
 |---|---|
-| [Getting started](docs/getting-started.md) | First identification and assessment |
-| [Installation](docs/installation.md) | Installer and building from source |
-| [CLI reference](docs/cli.md) | Every command and flag |
-| [Console](docs/console.md) | Interactive session: prompt, history, completion |
-| [Architecture](docs/architecture.md) | Package layout, pipeline, dataflow design |
-| [Findings](docs/findings.md) | Rule families, confidence model, IDs |
-| [Validation](docs/validation.md) | How findings earn VALIDATED |
-| [Reporting](docs/reporting.md) | JSON report, event stream, exit codes |
-| [Security model](docs/security-model.md) | Static-only boundaries, dynamic safety architecture |
-| [Development](docs/development.md) | Testing conventions, adding rules/decoders |
-| [Roadmap](docs/roadmap.md) | Shipped, planned, reserved |
+| [Getting started](docs/Getting-Started.md) | First identification and assessment |
+| [Installation](docs/Installation.md) | Installer and building from source |
+| [CLI reference](docs/CLI.md) | Every command and flag |
+| [Console](docs/Console.md) | Interactive session: prompt, history, completion |
+| [Architecture](docs/Architecture.md) | Package layout, pipeline, dataflow design |
+| [Findings](docs/Findings.md) | Rule families, confidence model, IDs |
+| [Validation](docs/Validation.md) | How findings earn VALIDATED |
+| [Reporting](docs/Reporting.md) | JSON report, event stream, exit codes |
+| [Security model](docs/Security-Model.md) | Static-only boundaries, dynamic safety architecture |
+| [Development](docs/Development.md) | Testing conventions, adding rules/decoders |
+| [Roadmap](docs/Roadmap.md) | Shipped, planned, reserved |
 
 ## Exit codes
 
@@ -225,7 +225,7 @@ Checks the installed version against the latest official QYVORA GitHub
 release, downloads the artifact for your platform, verifies its SHA-256
 against the published `SHA256SUMS`, and swaps the binary in atomically.
 Downgrades are refused and any failure leaves your current binary untouched —
-no Go toolchain or Git required. See [docs/installation.md](docs/installation.md)
+no Go toolchain or Git required. See [docs/Installation.md](docs/Installation.md)
 for details.
 
 ## Supported targets

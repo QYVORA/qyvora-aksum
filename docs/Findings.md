@@ -30,7 +30,7 @@ Aksum's vocabulary describes *evidence state*, not likelihood:
 | `CONFIRMED` | dynamically exercised; **reserved** — no rule emits it in this build |
 
 A dangerous import alone is a `CANDIDATE`, never a verdict. Escalation to
-`VALIDATED` happens only through [validation](validation.md) with dataflow
+`VALIDATED` happens only through [validation](Validation.md) with dataflow
 corroboration, and findings never downgrade within a run.
 
 ## Rule families

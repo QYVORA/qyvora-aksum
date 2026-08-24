@@ -113,5 +113,5 @@ run; `CONFIRMED` stays reserved for a future dynamic executor.
 ## Reporting
 
 Terminal rendering or a single JSON object (`schema_version` 1.0) — see
-[Reporting](reporting.md). Progress mirrors to the optional JSONL event
+[Reporting](Reporting.md). Progress mirrors to the optional JSONL event
 stream with the same determinism guarantees.
