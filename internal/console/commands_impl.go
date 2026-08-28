@@ -19,26 +19,22 @@ func runHelp(c *Console, p *Parsed) error {
 	if p.ArgsLen() > 0 {
 		return helpCommand(c, p.Arg(0))
 	}
-	c.printf("\n  Aksum console — binary security & reverse engineering\n\n")
 	for _, cat := range categoryOrder {
 		cmds := commandsInCategory(cat)
 		if len(cmds) == 0 {
 			continue
 		}
-		c.printf("  %s\n", cat)
-		width := 0
+		c.ui.Section(cat + " Commands")
+		var rows [][]string
 		for _, cmd := range cmds {
-			if n := len(cmd.displayUsage()); n > width {
-				width = n
-			}
+			rows = append(rows, []string{cmd.displayUsage(), cmd.Summary})
 		}
-		for _, cmd := range cmds {
-			c.printf("    %-*s  %s\n", width, cmd.displayUsage(), cmd.Summary)
-		}
-		c.printf("\n")
+		c.ui.Table([]string{"COMMAND", "DESCRIPTION"}, rows)
 	}
+	c.ui.Section("Guidance")
 	c.printf("  Aliases: %s\n", aliasSummary())
-	c.printf("  Use 'help <command>' for details; append --json for machine-readable output.\n\n")
+	c.printf("  Use 'help <command>' for details; append --json for machine-readable output.\n")
+	c.ui.Rule()
 	return nil
 }
 

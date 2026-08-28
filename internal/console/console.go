@@ -53,6 +53,7 @@ type Console struct {
 	cmds    map[string]*Command
 	aliases map[string]string
 	lr      lineReader
+	ui      *UI
 
 	histPathOverride string
 
@@ -81,6 +82,7 @@ func New(opts Options) *Console {
 	if c.errW == nil {
 		c.errW = os.Stderr
 	}
+	c.ui = newUI(c.out)
 	c.registerCommands()
 	return c
 }
@@ -109,6 +111,8 @@ func (c *Console) Run(rootCtx context.Context) int {
 
 	if c.interactive {
 		c.printBanner()
+		c.hud()
+		c.ui.Status("*", "console ready. type 'help' for commands.")
 	}
 
 	for {
@@ -132,6 +136,9 @@ func (c *Console) Run(rootCtx context.Context) int {
 		if c.execute(rootCtx, line) {
 			c.sess.Close()
 			return 0
+		}
+		if c.interactive {
+			c.hud()
 		}
 		c.interrupted.Store(false)
 	}
@@ -270,20 +277,34 @@ func (c *Console) cancelOperation() {
 	c.cancelMu.Unlock()
 }
 
-// printBanner writes the minimal startup banner.
+func (c *Console) hud() {
+	if !c.interactive {
+		return
+	}
+	target := "none"
+	arch := "none"
+	if c.sess.Target != nil {
+		target = c.sess.PromptName()
+		if c.sess.Target.Arch != "" {
+			arch = string(c.sess.Target.Arch)
+		}
+	}
+	cwd, _ := os.Getwd()
+	v := version.Version
+	if v == "" {
+		v = "dev"
+	}
+	c.ui.HUD(target, arch, cwd, v)
+}
+
+// printBanner writes the canonical startup banner.
 func (c *Console) printBanner() {
 	v := version.Version
 	if v == "" {
 		v = "dev"
 	}
-	fmt.Fprintf(c.out,
-		"  ╔══════════════════════════════════════════════╗\n"+
-			"  ║                    AKSUM                     ║\n"+
-			"  ║   Binary Security & Reverse Engineering      ║\n"+
-			"  ║                    QYVORA                    ║\n"+
-			"  ╚══════════════════════════════════════════════╝\n\n"+
-			"  Version %s — authorized use only\n"+
-			"  Type 'help' for available commands.\n\n", v)
+	c.ui.Banner("Binary Security & Reverse Engineering Platform")
+	c.ui.BannerFoot(v)
 }
 
 // ---- line readers ----------------------------------------------------

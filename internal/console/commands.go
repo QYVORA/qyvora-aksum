@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/QYVORA/qyvora-aksum/internal/banner"
 	"github.com/QYVORA/qyvora-aksum/internal/engine"
 	"github.com/QYVORA/qyvora-aksum/internal/version"
 )
@@ -70,6 +71,16 @@ func commandTable() []*Command {
 With a command name (or alias), shows its usage, aliases, flags,
 and full description.`,
 			Run: runHelp,
+		},
+		{
+			Name: "banner", Aliases: []string{"logo"}, Category: catCore,
+			Summary: "Print the Aksum banner",
+			Usage:   "banner",
+			Details: "Prints the canonical Aksum ASCII brand banner.",
+			Run: func(c *Console, _ *Parsed) error {
+				c.printf("%s\n", banner.Art)
+				return nil
+			},
 		},
 		{
 			Name: "version", Category: catCore,
