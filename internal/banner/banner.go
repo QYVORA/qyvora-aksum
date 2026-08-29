@@ -1,10 +1,10 @@
 // Package banner provides the canonical AKSUM brand banner (ASCII art).
 //
-// The art below is the exact byte-for-byte content of the repository-root
-// file ascii_banner.txt, which is the single source of truth for the brand
-// mark. Every surface of the tool (interactive console, terminal reports)
-// renders this banner — never substitute custom art or hand-written
-// wordmarks.
+// The art below is the exact byte-for-byte content of the brand banner file
+// aksum-banner.txt kept in the tools repository root (next to the sibling
+// tools' banner files). Every surface of the tool (interactive console,
+// terminal reports) renders this banner — never substitute custom art or
+// hand-written wordmarks.
 package banner
 
 // Art is the canonical AKSUM brand ASCII art banner.
