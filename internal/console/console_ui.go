@@ -73,8 +73,12 @@ func (u *UI) Rule() {
 	_, _ = fmt.Fprintln(u.w)
 }
 
+// kvLabelWidth is the fixed visible width used for "key: value" labels so the
+// values of consecutive KV lines always line up in a column.
+const kvLabelWidth = 22
+
 func (u *UI) KV(key, value string) {
-	_, _ = fmt.Fprintf(u.w, "  %s %s\n", u.BoldWhite(key+":"), u.White(value))
+	_, _ = fmt.Fprintf(u.w, "  %s %s\n", padTo(u.BoldWhite(key+":"), kvLabelWidth), u.White(value))
 }
 
 func (u *UI) Glyph(glyph string) string {
