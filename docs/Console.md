@@ -26,8 +26,9 @@ aksum > open ./app
   Entry         0x401000
 aksum [./app] > functions --min-confidence high
 [ANALYSIS] 42 functions discovered
-┌──────────┬──────────────────────┬──────┬───────┬──────────────┬─────────────────┐
-│  ADDRESS │ NAME                 │ CONF │  SIZE │ CALLS IN/OUT │ SOURCES         │
+ADDRESS  NAME                 CONF  SIZE  CALLS IN/OUT  SOURCES
+0x401000  main                  1.0   24576   40/12       [elf, symtab]
+0x4012c0  parse_input           0.9    6144    8/5       [symtab]
 ...
 ```
 

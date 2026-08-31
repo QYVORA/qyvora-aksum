@@ -5,58 +5,47 @@ import (
 	"testing"
 )
 
-func TestBasicUnicodeRender(t *testing.T) {
-	tt := New("name", "type", "size").
-		SetStyle(UnicodeStyle).
-		SetWidth(80)
+func TestBasicRender(t *testing.T) {
+	tt := New("name", "type", "size").SetWidth(80)
 	tt.AddRow(".text", "PROGBITS", "24576")
 	tt.AddRow(".rodata", "PROGBITS", "8192")
 
 	out := tt.String()
-	for _, want := range []string{"┌", "│ NAME", ".text", "24576", "└"} {
+	for _, want := range []string{"NAME", "TYPE", "SIZE", ".text", "24576", ".rodata", "8192"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("output missing %q:\n%s", want, out)
 		}
 	}
-	if !strings.Contains(out, "├") || !strings.Contains(out, "┼") {
-		t.Fatalf("missing row separator:\n%s", out)
+	// No box-drawing borders or horizontal rules.
+	for _, forbid := range []string{"┌", "│", "└", "├", "┼", "─", "|", "+"} {
+		if strings.Contains(out, forbid) {
+			t.Fatalf("output must not contain %q:\n%s", forbid, out)
+		}
 	}
 
 	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
-	width := len([]rune(lines[0]))
-	for i, l := range lines {
-		if len([]rune(l)) != width {
-			t.Fatalf("line %d width %d != %d (ragged box):\n%s", i, len([]rune(l)), width, out)
-		}
-	}
-}
-
-func TestASCIIFallback(t *testing.T) {
-	tt := New("a").SetStyle(ASCIIStyle).SetWidth(40)
-	tt.AddRow("x")
-	out := tt.String()
-	if !strings.Contains(out, "+") || strings.ContainsAny(out, "┌│└") {
-		t.Fatalf("ASCII style not used: %q", out)
+	if len(lines) != 3 {
+		t.Fatalf("table produced %d lines, want 3 (header + 2 rows):\n%s", len(lines), out)
 	}
 }
 
 func TestEmptyTableRendersHeaderOnly(t *testing.T) {
-	tt := New("h1", "h2").SetStyle(UnicodeStyle)
+	tt := New("h1", "h2")
 	if !tt.Empty() || tt.Len() != 0 {
 		t.Fatal("fresh table must be empty")
 	}
 	out := tt.String()
-	if strings.Count(out, "\n") != 3 {
-		t.Fatalf("empty table should render 3 lines (top/header/bottom):\n%q", out)
+	if strings.Count(strings.TrimRight(out, "\n"), "\n") != 0 {
+		t.Fatalf("empty table should render only the header row:\n%q", out)
 	}
-	if strings.Contains(out, "│\n") && strings.Count(out, "│") != 4 {
-		t.Logf("note: header row uses verticals: %q", out)
+	if !strings.Contains(out, "H1") || !strings.Contains(out, "H2") {
+		t.Fatalf("header labels missing: %q", out)
 	}
 }
 
 func TestLongValuesTruncatedToWidth(t *testing.T) {
 	long := strings.Repeat("A", 300)
-	tt := New("value").SetWidth(50).SetStyle(UnicodeStyle)
+	tt := New("value").SetWidth(50)
 	tt.AddRow(long)
 	out := tt.String()
 	for _, l := range strings.Split(out, "\n") {
@@ -82,12 +71,20 @@ func TestControlCharactersSanitized(t *testing.T) {
 }
 
 func TestAlignmentRight(t *testing.T) {
-	tt := New("num").SetAlign(0, AlignRight).SetStyle(UnicodeStyle)
+	tt := New("num").SetAlign(0, AlignRight).SetWidth(80)
 	tt.AddRow("12")
 	tt.AddRow("1234567")
-	out := tt.String()
-	if !strings.Contains(out, "      12 │") {
-		t.Fatalf("right alignment missing:\n%s", out)
+	lines := strings.Split(strings.TrimRight(tt.String(), "\n"), "\n")
+	if len(lines) != 3 {
+		t.Fatalf("table produced %d lines, want 3:\n%s", len(lines), tt.String())
+	}
+	// All data rows must be the same width and right-aligned: "12" is padded
+	// on the left so both columns line up at the same right edge.
+	if len([]rune(lines[1])) != len([]rune(lines[2])) {
+		t.Fatalf("row widths differ (%d vs %d):\n%s", len([]rune(lines[1])), len([]rune(lines[2])), tt.String())
+	}
+	if strings.HasSuffix(lines[1], "12") && !strings.HasPrefix(lines[1], " ") {
+		t.Fatalf("'12' must be right-aligned with leading padding:\n%s", tt.String())
 	}
 }
 
@@ -112,24 +109,6 @@ func TestDetectWidthEnvOverride(t *testing.T) {
 	t.Setenv("COLUMNS", "5") // below floor: ignored
 	if got := DetectWidth(); got < MinTableWidth {
 		t.Fatalf("DetectWidth() = %d, want >= floor", got)
-	}
-}
-
-func TestPickStyleRestrictedTerminal(t *testing.T) {
-	t.Setenv("TERM", "dumb")
-	t.Setenv("LC_ALL", "C.UTF-8")
-	if PickStyle() != ASCIIStyle {
-		t.Fatal("TERM=dumb must select ASCII style")
-	}
-	t.Setenv("TERM", "xterm-256color")
-	if PickStyle() != UnicodeStyle {
-		t.Fatal("UTF-8 terminal must select Unicode style")
-	}
-	t.Setenv("LANG", "C")
-	t.Setenv("LC_ALL", "")
-	t.Setenv("LC_CTYPE", "")
-	if PickStyle() != ASCIIStyle {
-		t.Fatal("non-UTF-8 locale must select ASCII style")
 	}
 }
 

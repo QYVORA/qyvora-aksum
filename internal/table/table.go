@@ -3,9 +3,9 @@
 // One renderer serves every command so reverse-engineering datasets
 // (sections, symbols, functions, findings, ...) share a single visual
 // language instead of per-command ASCII art. The renderer handles column
-// widths, alignment, terminal-width truncation of long values, Unicode box
-// drawing with a clean ASCII fallback for restricted terminals, and empty
-// result sets.
+// widths, alignment, terminal-width truncation of long values, and empty
+// result sets. Tables use clean aligned columns with no box-drawing borders
+// or horizontal rules, matching the ecosystem's console style.
 //
 // Tables are presentation-only: machine-readable output (--format json)
 // never passes through this package.
@@ -30,35 +30,6 @@ const (
 	AlignRight
 )
 
-// Style selects box-drawing characters.
-type Style struct {
-	TopLeft, TopMid, TopRight, Horizontal string
-	Left, Mid, Right, Vertical            string
-	BottomLeft, BottomMid, BottomRight    string
-	RowSepLeft, RowSepMid, RowSepRight    string
-	Ellipsis                              string
-}
-
-// UnicodeStyle draws clean Unicode box tables. Default when the terminal
-// supports UTF-8.
-var UnicodeStyle = Style{
-	TopLeft: "┌", TopMid: "┬", TopRight: "┐", Horizontal: "─",
-	Left: "│", Mid: "│", Right: "│", Vertical: "│",
-	BottomLeft: "└", BottomMid: "┴", BottomRight: "┘",
-	RowSepLeft: "├", RowSepMid: "┼", RowSepRight: "┤",
-	Ellipsis: "…",
-}
-
-// ASCIIStyle is the restricted-terminal fallback (dumb TERM, non-UTF-8
-// locale, or explicit opt-out via AKSUM_ASCII=1).
-var ASCIIStyle = Style{
-	TopLeft: "+", TopMid: "+", TopRight: "+", Horizontal: "-",
-	Left: "|", Mid: "|", Right: "|", Vertical: "|",
-	BottomLeft: "+", BottomMid: "+", BottomRight: "+",
-	RowSepLeft: "+", RowSepMid: "+", RowSepRight: "+",
-	Ellipsis: "~",
-}
-
 // DefaultWidth is used when the terminal size cannot be determined.
 const DefaultWidth = 100
 
@@ -71,8 +42,7 @@ type Table struct {
 	headers []string
 	rows    [][]string
 	align   []Align
-	style   Style
-	width   int // max total rendered width incl. borders; 0 = auto-detect
+	width   int // max total rendered width incl. gaps; 0 = auto-detect
 }
 
 // New starts a table with the given header labels.
@@ -81,7 +51,6 @@ func New(headers ...string) *Table {
 	for range headers {
 		t.align = append(t.align, AlignLeft)
 	}
-	t.style = PickStyle()
 	t.width = DetectWidth()
 	return t
 }
@@ -93,9 +62,6 @@ func (t *Table) SetAlign(col int, a Align) *Table {
 	}
 	return t
 }
-
-// SetStyle overrides the box-drawing style (tests and restricted terminals).
-func (t *Table) SetStyle(s Style) *Table { t.style = s; return t }
 
 // SetWidth overrides the detected terminal-width cap.
 func (t *Table) SetWidth(w int) *Table { t.width = w; return t }
@@ -118,7 +84,7 @@ func (t *Table) Empty() bool { return len(t.rows) == 0 }
 // Len returns the number of data rows.
 func (t *Table) Len() int { return len(t.rows) }
 
-// Render writes the table to w. An empty table renders only its header box;
+// Render writes the table to w. An empty table renders only its header row;
 // callers decide how to message empty result sets. Write errors are the
 // caller's concern (a failing terminal pipe cannot be recovered here), so
 // they are explicitly discarded.
@@ -126,47 +92,36 @@ func (t *Table) Render(w io.Writer) {
 	_, _ = fmt.Fprint(w, t.String())
 }
 
-// String renders the table to a string.
+// String renders the table to a string: an uppercase header row followed by
+// aligned data rows. Columns are separated by two spaces; no borders or
+// horizontal rules are drawn.
 func (t *Table) String() string {
 	widths := t.computeWidths()
 	var b strings.Builder
 
-	line := func(l, m, r string) {
-		b.WriteString(l)
-		for i, wd := range widths {
+	run := func(cells []string) {
+		for i := range widths {
 			if i > 0 {
-				b.WriteString(m)
+				b.WriteString("  ")
 			}
-			b.WriteString(strings.Repeat(t.style.Horizontal, wd+2)) // +2 cell padding
+			cell := ""
+			if i < len(cells) {
+				cell = cells[i]
+			}
+			cell = t.fitPad(cell, widths[i], t.align[i])
+			if i == len(widths)-1 {
+				cell = strings.TrimRight(cell, " ")
+			}
+			b.WriteString(cell)
 		}
-		b.WriteString(r + "\n")
+		b.WriteString("\n")
 	}
 
-	line(t.style.TopLeft, t.style.TopMid, t.style.TopRight)
-	t.renderRow(&b, upperAll(t.headers), widths)
-	if len(t.rows) > 0 {
-		line(t.style.RowSepLeft, t.style.RowSepMid, t.style.RowSepRight)
-		for _, r := range t.rows {
-			t.renderRow(&b, r, widths)
-		}
+	run(upperAll(t.headers))
+	for _, r := range t.rows {
+		run(r)
 	}
-	line(t.style.BottomLeft, t.style.BottomMid, t.style.BottomRight)
 	return b.String()
-}
-
-func (t *Table) renderRow(b *strings.Builder, cells []string, widths []int) {
-	b.WriteString(t.style.Left)
-	for i := range widths {
-		if i > 0 {
-			b.WriteString(t.style.Mid)
-		}
-		cell := ""
-		if i < len(cells) {
-			cell = cells[i]
-		}
-		b.WriteString(" " + t.fitPad(cell, widths[i], t.align[i]) + " ")
-	}
-	b.WriteString(t.style.Right + "\n")
 }
 
 // computeWidths sizes each column to its widest visible cell, then shrinks
@@ -185,9 +140,11 @@ func (t *Table) computeWidths() []int {
 		}
 	}
 
-	maxTotal := t.width - (n + 1) - (2 * n) // borders/separators + padding
-	if maxTotal < MinTableWidth-n-1-2*n {
-		maxTotal = MinTableWidth - n - 1 - 2*n
+	// Two-space gaps between columns consume the width budget.
+	gaps := 2 * (n - 1)
+	maxTotal := t.width - gaps
+	if maxTotal < MinTableWidth-gaps {
+		maxTotal = MinTableWidth - gaps
 	}
 	for sum(widths) > maxTotal {
 		idx := argmax(widths)
@@ -202,7 +159,7 @@ func (t *Table) computeWidths() []int {
 // fitPad truncates a cell to its column and pads it per alignment.
 func (t *Table) fitPad(s string, w int, a Align) string {
 	if dw := displayWidth(s); dw > w {
-		ell := t.style.Ellipsis
+		const ell = "…"
 		if w <= utf8.RuneCountInString(ell) {
 			return ell[:min(w, len(ell))]
 		}
@@ -276,37 +233,6 @@ func sanitize(s string) string {
 		return s
 	}
 	return ctrlReplacer.Replace(s)
-}
-
-// PickStyle selects box-drawing characters from the environment:
-// TERM=dumb, AKSUM_ASCII=1, or a locale without UTF-8 select the ASCII
-// fallback; everything modern defaults to Unicode.
-func PickStyle() Style {
-	if !supportsUTF8() {
-		return ASCIIStyle
-	}
-	return UnicodeStyle
-}
-
-func supportsUTF8() bool {
-	if os.Getenv("TERM") == "dumb" {
-		return false
-	}
-	if v := os.Getenv("AKSUM_ASCII"); v != "" && v != "0" && v != "false" {
-		return false
-	}
-	locale := os.Getenv("LC_ALL")
-	if locale == "" {
-		locale = os.Getenv("LC_CTYPE")
-	}
-	if locale == "" {
-		locale = os.Getenv("LANG")
-	}
-	if locale != "" && !strings.Contains(strings.ToUpper(locale), "UTF-8") &&
-		!strings.Contains(strings.ToUpper(locale), "UTF8") {
-		return false
-	}
-	return true
 }
 
 // DetectWidth reports the current terminal width: COLUMNS overrides,
