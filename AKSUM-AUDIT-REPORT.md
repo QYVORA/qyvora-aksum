@@ -169,7 +169,7 @@ to hold:
   files are created `0600`; no target content is ever executed.
 - The tool performs read-only analysis; no network egress exists in the
   codebase (verified: no `net.Dial` outside stdlib test paths).
-- Release binaries are stamped via ldflags and published with SHA256SUMS;
+- Release binaries are stamped via ldflags and published with checksums.txt;
   the installer verifies checksums before install.
 - Dependency surface is deliberately minimal: `spf13/cobra`,
   `golang.org/x/arch`. No other third-party imports.

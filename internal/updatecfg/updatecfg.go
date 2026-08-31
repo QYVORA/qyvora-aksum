@@ -22,11 +22,14 @@ func Config() selfupdate.Config {
 		},
 		ArtifactName: func(goos, goarch string) string {
 			name := fmt.Sprintf("aksum-%s-%s", goos, goarch)
+			if goos == "darwin" {
+				name = fmt.Sprintf("aksum-macos-%s", goarch)
+			}
 			if goos == "windows" {
 				name += ".exe"
 			}
 			return name
 		},
-		ChecksumAsset: func(string) string { return "SHA256SUMS" },
+		ChecksumAsset: func(string) string { return "checksums.txt" },
 	}
 }

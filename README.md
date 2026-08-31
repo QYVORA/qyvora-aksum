@@ -208,6 +208,17 @@ full analysis lifecycle for automation: `scan.started`, bracketed
 curl -fsSL https://raw.githubusercontent.com/QYVORA/qyvora-aksum/main/install.sh | bash
 ```
 
+On Windows, use the PowerShell installer — it downloads the checksum-verified
+binary under `%LOCALAPPDATA%\Programs\aksum\bin`, adds it to your PATH, and
+installs the aksum icon with a Start Menu shortcut:
+
+```powershell
+irm https://raw.githubusercontent.com/QYVORA/qyvora-aksum/main/install.ps1 | iex
+```
+
+On Linux, `install.sh` also installs the aksum app icon and a desktop entry so
+the tool appears with its logo in the app menu.
+
 Or from source:
 
 ```bash
@@ -223,7 +234,7 @@ aksum updates         # `aksum update` works as an alias
 
 Checks the installed version against the latest official QYVORA GitHub
 release, downloads the artifact for your platform, verifies its SHA-256
-against the published `SHA256SUMS`, and swaps the binary in atomically.
+against the published `checksums.txt`, and swaps the binary in atomically.
 Downgrades are refused and any failure leaves your current binary untouched —
 no Go toolchain or Git required. See [docs/Installation.md](docs/Installation.md)
 for details.

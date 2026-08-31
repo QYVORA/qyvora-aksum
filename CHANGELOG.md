@@ -41,8 +41,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
   `--report` file output, `--min-severity` filter, JSONL event stream
 - Exit-code contract: 0 success, 1 runtime, 2 usage, 3 unsupported target,
   130 interrupted
-- Cross-platform release pipeline (linux/darwin/windows, amd64/arm64) with
-  SHA256SUMS verification
+- Cross-platform release pipeline (linux/macos/windows, amd64/arm64) with
+  checksums.txt verification
 
 ### Fixed
 - `strings` now honors RAW degradation: unknown containers and ELF files

@@ -6,7 +6,7 @@
 # then installs the correct prebuilt binary with nothing for you to pick.
 #  1. Detects OS (Linux / macOS / Windows-GitBash) and architecture (amd64/arm64)
 #  2. Downloads the matching prebuilt binary from GitHub Releases and verifies
-#     its SHA-256 against the published SHA256SUMS (supply-chain protection)
+#     its SHA-256 against the published checksums.txt (supply-chain protection)
 #  3. Falls back to building from source (needs Go) if the download fails
 #  4. Installs to ~/.local/bin (no sudo required) and adds it to your shell
 #     config automatically (bash / zsh / fish)
@@ -115,7 +115,7 @@ install_release() {
         return 1
     fi
 
-    # SHA-256 verification against the published SHA256SUMS
+    # SHA-256 verification against the published checksums.txt
     local hashtool=""
     if command -v sha256sum >/dev/null 2>&1; then
         hashtool="sha256sum"
@@ -124,9 +124,9 @@ install_release() {
     fi
 
     if [ -n "$hashtool" ]; then
-        if curl -fsSL --connect-timeout 10 "${BASE_URL}/SHA256SUMS" -o "${WORK_DIR}/SHA256SUMS"; then
+        if curl -fsSL --connect-timeout 10 "${BASE_URL}/checksums.txt" -o "${WORK_DIR}/checksums.txt"; then
             local want got
-            want=$(awk -v n="$name" '$2 == n { print $1 }' "${WORK_DIR}/SHA256SUMS")
+            want=$(awk -v n="$name" '$2 == n { print $1 }' "${WORK_DIR}/checksums.txt")
             got=$($hashtool "$local_bin" | awk '{ print $1 }')
             if [ -z "$want" ]; then
                 warn "No checksum entry found for ${name}; continuing without verification."
@@ -136,7 +136,7 @@ install_release() {
                 die "Checksum mismatch for ${name}! The downloaded binary may have been tampered with. Aborting."
             fi
         else
-            warn "Could not fetch SHA256SUMS; continuing without verification."
+            warn "Could not fetch checksums.txt; continuing without verification."
         fi
     else
         warn "No sha256 tool found; skipping checksum verification."
@@ -144,6 +144,29 @@ install_release() {
 
     chmod +x "$local_bin"
     INSTALL_BIN="$local_bin"
+
+    # Grab the branded icon alongside the binary so desktop integration ships
+    # a logo, not a bare command. Verified against checksums.txt when present.
+    if [ "$os" != "windows" ]; then
+        if curl -fsSL --connect-timeout 10 "${BASE_URL}/aksum.png" -o "${WORK_DIR}/aksum.png"; then
+            if [ -n "$hashtool" ] && [ -f "${WORK_DIR}/checksums.txt" ]; then
+                local cwant cgot
+                cwant=$(awk -v n="aksum.png" '$2 == n { print $1 }' "${WORK_DIR}/checksums.txt")
+                if [ -n "$cwant" ]; then
+                    cgot=$($hashtool "${WORK_DIR}/aksum.png" | awk '{ print $1 }')
+                    if [ "$cwant" = "$cgot" ]; then
+                        ok "SHA-256 verified for aksum.png"
+                    else
+                        warn "Icon checksum mismatch; desktop icon will be skipped."
+                        rm -f "${WORK_DIR}/aksum.png"
+                    fi
+                fi
+            fi
+        else
+            warn "Could not fetch aksum.png; desktop icon will be skipped."
+        fi
+    fi
+
     return 0
 }
 
@@ -154,6 +177,19 @@ install_from_source() {
     if ! command -v go >/dev/null 2>&1; then
         die "No prebuilt binary available and Go is not installed. Install Go 1.22+ from https://go.dev and re-run this script."
     fi
+
+    # Running inside a checkout of the repo? Build straight from the working
+    # tree so offline and pre-release installs need no network and no curl.
+    if [ -f "$PWD/go.mod" ]; then
+        info "Building from the local checkout ($PWD)..."
+        if CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o "${WORK_DIR}/aksum-src" .; then
+            INSTALL_BIN="${WORK_DIR}/aksum-src"
+            return 0
+        else
+            warn "Local checkout build failed; trying the source tarball."
+        fi
+    fi
+
     if ! command -v curl >/dev/null 2>&1; then
         die "curl is required to fetch the source tarball."
     fi

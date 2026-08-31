@@ -10,6 +10,20 @@ The installer detects your operating system and CPU architecture, downloads the
 matching release asset, verifies it against the published SHA-256 checksums,
 and installs `aksum` on your `PATH`. Re-run the same command to upgrade.
 
+On Linux it also installs the aksum app icon and a `.desktop` entry, so aksum
+shows up with its logo in the application menu.
+
+### Windows
+
+```powershell
+irm https://raw.githubusercontent.com/QYVORA/qyvora-aksum/main/install.ps1 | iex
+```
+
+Installs the checksum-verified binary under `%LOCALAPPDATA%\Programs\aksum\bin`,
+adds it to your user PATH, installs the aksum icon, and creates a Start Menu
+shortcut. Pin `$env:AKSUM_VERSION` or `$env:AKSUM_PREFIX` to control the version
+or install location.
+
 ## Updating an existing install
 
 Once aksum is installed, update it with:
@@ -26,8 +40,8 @@ The command:
 3. Compares versions semantically (`v1.10.0 > v1.9.0`) and reports whether an
    update exists.
 4. Downloads the release artifact built for your OS and CPU architecture
-   (`aksum-linux-amd64`, `aksum-darwin-arm64`, `aksum-windows-amd64.exe`, …).
-5. Verifies its SHA-256 against the `SHA256SUMS` manifest published with the
+   (`aksum-linux-amd64`, `aksum-macos-arm64`, `aksum-windows-amd64.exe`, …).
+5. Verifies its SHA-256 against the `checksums.txt` manifest published with the
    release; installation never proceeds on a mismatch.
 6. Swaps the new binary in atomically, preserving the original file permissions.
 7. Cleans up all temporary files and confirms the new version.
@@ -64,10 +78,10 @@ binary.
 
 ## Verify a download
 
-Release artifacts ship with a `SHA256SUMS` file:
+Release artifacts ship with a `checksums.txt` file:
 
 ```bash
-sha256sum -c SHA256SUMS 2>/dev/null | grep aksum
+sha256sum -c checksums.txt 2>/dev/null | grep aksum
 ```
 
 Every analysis run also anchors itself to the target's SHA-256 — see
