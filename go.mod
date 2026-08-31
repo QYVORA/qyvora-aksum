@@ -1,6 +1,6 @@
 module github.com/QYVORA/qyvora-aksum
 
-go 1.25.0
+go 1.26.5
 
 require (
 	github.com/ergochat/readline v0.1.3

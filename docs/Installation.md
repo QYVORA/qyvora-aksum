@@ -62,8 +62,8 @@ Use `--format json` (or `-f json`) for machine-readable output.
 
 ## Build from source
 
-Requirements: a Go 1.22+ toolchain. No external dependencies — the module has
-none outside the Go standard library.
+Requirements: a Go 1.26+ toolchain (the version pinned by `go.mod`). No
+external dependencies — the module has none outside the Go standard library.
 
 ```bash
 git clone https://github.com/QYVORA/qyvora-aksum

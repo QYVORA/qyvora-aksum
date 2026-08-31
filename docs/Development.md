@@ -7,9 +7,9 @@ git clone https://github.com/QYVORA/qyvora-aksum
 cd qyvora-aksum
 ```
 
-Go 1.22+. Zero third-party dependencies — the entire module builds on the
-standard library (including `golang.org/x/arch` vendored via the module
-graph for x86 decoding).
+Go 1.26+ (the version pinned by `go.mod`). Zero third-party dependencies —
+the entire module builds on the standard library (including
+`golang.org/x/arch` vendored via the module graph for x86 decoding).
 
 ## Make targets
 
