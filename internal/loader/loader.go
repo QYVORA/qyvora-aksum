@@ -14,6 +14,7 @@ import (
 
 	"github.com/QYVORA/qyvora-aksum/internal/binary"
 	"github.com/QYVORA/qyvora-aksum/internal/formats/elf"
+	"github.com/QYVORA/qyvora-aksum/internal/formats/pe"
 )
 
 // ErrUnsupported reports a recognized-but-unimplemented container format.
@@ -60,6 +61,15 @@ func Open(path string) (*binary.Target, error) {
 			// tables). Degrade honestly to RAW — strings-only analysis
 			// remains possible and identification is reported as
 			// unavailable rather than half-guessed.
+			t = &binary.Target{Path: path, Size: st.Size(), SHA256: t.SHA256, Format: binary.FormatRaw}
+		}
+	case magic[0] == 'M' && magic[1] == 'Z':
+		// A valid PE image begins "MZ" and carries a "PE\0\0" signature at
+		// the offset stored at 0x3C. pe.Identify validates both and fills the
+		// neutral model; a file that smells MZ but fails the signature check
+		// degrades honestly to RAW rather than half-claiming PE.
+		t.Format = binary.FormatPE
+		if err := pe.Identify(t, fa, st.Size()); err != nil {
 			t = &binary.Target{Path: path, Size: st.Size(), SHA256: t.SHA256, Format: binary.FormatRaw}
 		}
 	default:

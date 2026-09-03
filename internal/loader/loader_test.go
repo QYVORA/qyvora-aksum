@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/QYVORA/qyvora-aksum/internal/testfix"
 )
 
 func TestOpenMissingFile(t *testing.T) {
@@ -47,6 +49,29 @@ func TestOpenShortFile(t *testing.T) {
 	}
 	if tgt.Format != "RAW" {
 		t.Fatalf("truncated magic must fall back to RAW, got %s", tgt.Format)
+	}
+}
+
+func TestOpenPEIdentifies(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "sample.exe")
+	if err := os.WriteFile(p, testfix.PE32(), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	tgt, err := Open(p)
+	if err != nil {
+		t.Fatalf("open PE: %v", err)
+	}
+	if tgt.Format != "PE" {
+		t.Fatalf("format = %s, want PE", tgt.Format)
+	}
+	if tgt.Arch != "x86" || tgt.Class != "PE32" {
+		t.Errorf("identification = %s/%s, want PE32/x86", tgt.Class, tgt.Arch)
+	}
+	if tgt.Entry != 0x1000 {
+		t.Errorf("entry = %#x, want %#x", tgt.Entry, 0x1000)
+	}
+	if tgt.SHA256 == "" {
+		t.Error("sha256 must always be computed")
 	}
 }
 
