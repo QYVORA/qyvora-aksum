@@ -13,6 +13,7 @@ import (
 	"github.com/QYVORA/qyvora-aksum/internal/analysis/structure"
 	"github.com/QYVORA/qyvora-aksum/internal/binary"
 	"github.com/QYVORA/qyvora-aksum/internal/disasm"
+	arm64dec "github.com/QYVORA/qyvora-aksum/internal/disasm/arm64"
 	x86dec "github.com/QYVORA/qyvora-aksum/internal/disasm/x86"
 	"github.com/QYVORA/qyvora-aksum/internal/functions"
 	"github.com/QYVORA/qyvora-aksum/internal/security/class"
@@ -39,8 +40,10 @@ func DecoderFor(arch binary.Arch) (disasm.Decoder, error) {
 		return x86dec.New64(), nil
 	case "x86":
 		return x86dec.New32(), nil
+	case "AArch64":
+		return arm64dec.New(), nil
 	default:
-		return nil, Unsupportedf("disassembly of %q is not supported yet (supported: x86-64, x86)", arch)
+		return nil, Unsupportedf("disassembly of %q is not supported yet (supported: x86-64, x86, AArch64)", arch)
 	}
 }
 
