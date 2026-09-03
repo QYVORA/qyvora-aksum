@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -44,8 +45,12 @@ func TestBuildPlanRefusals(t *testing.T) {
 
 	if _, err := BuildPlan(raw, nil, consenting()); err == nil {
 		t.Error("RAW target must be refused")
-	} else if !errors.Is(err, err) { //nolint:errorlint // direct check below
-		t.Fatalf("unreachable")
+	} else {
+		// The retry-relevant detail is the format: the refusal must name the
+		// unidentified container so an operator knows why planning stopped.
+		if !strings.Contains(err.Error(), `"RAW"`) && !strings.Contains(err.Error(), "unidentified") {
+			t.Fatalf("refusal must identify the RAW cause, got: %v", err)
+		}
 	}
 
 	if _, err := BuildPlan(elfTarget(), nil, Defaults()); err == nil {

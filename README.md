@@ -253,4 +253,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 ---
 
-MIT © QYVORA OffSec — part of the QYVORA open-source security toolchain alongside [ANANSI](https://github.com/QYVORA/qyvora-anansi-cli), TOHA3EE, and JABARI.
+MIT © QYVORA OffSec — part of the QYVORA open-source security toolchain alongside [ANANSI](https://github.com/QYVORA/qyvora-anansi), TOHA3EE, and JABARI.
