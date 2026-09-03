@@ -20,6 +20,7 @@ import (
 func registerTargetCommands(root *cobra.Command) {
 	root.AddCommand(
 		newBinaryCmd(),
+		newPECmd(),
 		newSectionsCmd(),
 		newSegmentsCmd(),
 		newSymbolsCmd(),
