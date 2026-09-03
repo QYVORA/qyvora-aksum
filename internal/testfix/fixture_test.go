@@ -21,6 +21,11 @@ func TestELF64IsDeterministic(t *testing.T) {
 	if bytes.Equal(a[:], c[:]) || bytes.Equal(a[:], d[:]) {
 		t.Fatal("distinct variants must produce distinct bytes")
 	}
+	e := sha256.Sum256(AArch64ELF())
+	if bytes.Equal(a[:], e[:]) {
+		t.Fatal("AArch64 fixture must differ from the x86-64 fixture")
+	}
+	t.Logf("AArch64 sha256=%s", hex.EncodeToString(e[:]))
 }
 
 func TestVariantsAreWellFormedEnoughForDebugElf(t *testing.T) {
