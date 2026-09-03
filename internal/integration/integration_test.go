@@ -14,7 +14,9 @@ import (
 	"github.com/QYVORA/qyvora-aksum/internal/analysis/structure"
 	"github.com/QYVORA/qyvora-aksum/internal/binary"
 	"github.com/QYVORA/qyvora-aksum/internal/checks"
+	arm64dec "github.com/QYVORA/qyvora-aksum/internal/disasm/arm64"
 	"github.com/QYVORA/qyvora-aksum/internal/disasm/x86"
+	"github.com/QYVORA/qyvora-aksum/internal/engine"
 	"github.com/QYVORA/qyvora-aksum/internal/functions"
 	"github.com/QYVORA/qyvora-aksum/internal/loader"
 	"github.com/QYVORA/qyvora-aksum/internal/testfix"
@@ -131,5 +133,46 @@ func TestNegativeTruncatedHeader(t *testing.T) {
 	}
 	if tgt.Format != binary.FormatRaw {
 		t.Errorf("format = %s, want RAW for unparseable content", tgt.Format)
+	}
+}
+
+func TestAArch64FullPipeline(t *testing.T) {
+	path := writeFixture(t, testfix.AArch64ELF())
+
+	tgt, err := loader.Open(path)
+	if err != nil {
+		t.Fatalf("identify: %v", err)
+	}
+	if tgt.Format != binary.FormatELF || tgt.Arch != "AArch64" {
+		t.Fatalf("identification = %s/%s, want ELF/AArch64", tgt.Format, tgt.Arch)
+	}
+
+	// The engine must pick the AArch64 decoder for this arch (resolves the
+	// former "identified but not disassembled" gap).
+	ac, err := engine.OpenAnalysis(path)
+	if err != nil {
+		t.Fatalf("engine.OpenAnalysis: %v", err)
+	}
+	defer ac.Close() //nolint:errcheck // read-only
+	if ac.Decoder.Arch() != "AArch64" {
+		t.Fatalf("decoder arch = %q, want AArch64", ac.Decoder.Arch())
+	}
+	if len(ac.Funcs) < 2 {
+		t.Fatalf("expected entry function + helper, got %d function(s)", len(ac.Funcs))
+	}
+
+	// Direct decoder check at the known entry address.
+	fn, err := functions.Discover(ac.Im, arm64dec.New(), functions.Options{})
+	if err != nil {
+		t.Fatalf("discover: %v", err)
+	}
+	if len(fn) == 0 {
+		t.Fatal("no function discovered")
+	}
+	if len(fn[0].Instructions) != 3 { // BL; MOV; RET
+		t.Errorf("entry function decoded %d instructions, want 3", len(fn[0].Instructions))
+	}
+	if fn[0].Instructions[0].Mnemonic != "BL" {
+		t.Errorf("first instruction = %q, want BL", fn[0].Instructions[0].Mnemonic)
 	}
 }
