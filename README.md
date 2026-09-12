@@ -251,6 +251,11 @@ make verify   # lint + vet + race tests + build
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
+## Contact
+
+QYVORA OffSec — Tamale, Ghana
+Website: https://qyvora.netlify.app · Security/Support: qyvorasec@gmail.com
+
 ---
 
 MIT © QYVORA OffSec — part of the QYVORA open-source security toolchain alongside [ANANSI](https://github.com/QYVORA/qyvora-anansi), TOHA3EE, and JABARI.

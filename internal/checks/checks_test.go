@@ -1,6 +1,7 @@
 package checks
 
 import (
+	"strings"
 	"testing"
 
 	strscan "github.com/QYVORA/qyvora-aksum/internal/analysis/strings"
@@ -109,6 +110,65 @@ func TestWeakCryptoStringSuspected(t *testing.T) {
 		if f.Rule == "weak-crypto-md5" && f.Confidence != findings.ConfSuspected {
 			t.Fatalf("string-only crypto signal must stay SUSPECTED, got %s", f.Confidence)
 		}
+	}
+}
+
+func TestWeakCryptoIgnoresIncidentalSubstrings(t *testing.T) {
+	cases := []struct {
+		value string
+		token string
+	}{
+		{"desired setting value", "des"},
+		{"checkpoint restore", "ecb"},
+		{"rbc4 rollover counter", "rc4"},
+		{"shal1 comparison", "sha1"},
+		{"md5x padding", "md5"},
+	}
+	for _, tc := range cases {
+		if weakTokenIn(tc.value, tc.token) {
+			t.Errorf("weakTokenIn(%q, %q) = true, want false (incidental substring)", tc.value, tc.token)
+		}
+	}
+}
+
+func TestWeakCryptoMatchesStandaloneTokens(t *testing.T) {
+	cases := []struct {
+		value string
+		token string
+	}{
+		{"use rc4 cipher", "rc4"},
+		{"crypto/md5 import", "md5"},
+		{"MD5_Init", "md5"},
+		{"aes-ecb mode", "ecb"},
+		{"sha1-unsafe", "sha1"},
+		{"BEGIN DES-EDE3", "des"},
+	}
+	for _, tc := range cases {
+		if !weakTokenIn(strings.ToLower(tc.value), tc.token) {
+			t.Errorf("weakTokenIn(%q, %q) = false, want true", tc.value, tc.token)
+		}
+	}
+}
+
+func TestWeakCryptoReportsOnlyFirstMatchPerToken(t *testing.T) {
+	fs, err := Run(&Context{
+		Target: baseTarget(),
+		Strings: []strscan.Classified{
+			{Str: strscan.Str{Value: "Use MD5 here", Address: 0x6000}},
+			{Str: strscan.Str{Value: "also md5 there", Address: 0x7000}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var n int
+	for _, f := range fs {
+		if f.Rule == "weak-crypto-md5" {
+			n++
+		}
+	}
+	if n != 1 {
+		t.Fatalf("weak-crypto-md5 reported %d time(s), want 1 (deduplicated per token)", n)
 	}
 }
 

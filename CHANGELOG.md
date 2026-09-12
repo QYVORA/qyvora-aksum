@@ -6,6 +6,22 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Unified version system** — `internal/version` now carries the canonical
+  framework identity (framework, version, commit, date, build user, Go
+  version/arch/os) stamped via `-ldflags`, plus official QYVORA contact
+  details. `aksum version` renders the complete identity block in terminal
+  and JSON formats.
+- **Contact details** — the `version` command, README, and `SECURITY.md`
+  surface official QYVORA contact: https://qyvora.netlify.app ·
+  qyvorasec@gmail.com · Tamale, Ghana.
+- **Weak-crypto false-positive reduction** — `weak-crypto-*` markers are now
+  matched as standalone tokens (bounded by non-`[a-z0-9]`) instead of raw
+  substrings, so incidental collisions such as "desired"→DES,
+  "checkpoint"→ECB, or runtime strings containing "rc4" no longer fire.
+  Genuine references (`crypto/md5`, `MD5_Init`, isolated `rc4`) still signal
+  as SUSPECTED with the existing xref-validation guidance.
+
 ### Added
 - ELF identification: format, architecture, endianness, linking, PIE/NX/
   RELRO/canary/fortify with honest tri-state reporting

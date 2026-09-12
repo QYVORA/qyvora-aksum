@@ -222,7 +222,7 @@ func checkWeakCrypto(ctx *Context) ([]findings.Finding, error) {
 	for _, s := range ctx.Strings {
 		low := strings.ToLower(s.Value)
 		for _, m := range weakCryptoMarkers {
-			if seen[m.token] || !strings.Contains(low, m.token) {
+			if seen[m.token] || !weakTokenIn(low, m.token) {
 				continue
 			}
 			seen[m.token] = true
@@ -238,6 +238,44 @@ func checkWeakCrypto(ctx *Context) ([]findings.Finding, error) {
 		}
 	}
 	return out, nil
+}
+
+// weakTokenIn reports whether token appears in low as a standalone word
+// (bounded by non [a-z0-9] characters) rather than as an incidental
+// substring. This keeps real algorithm markers ("crypto/md5", "MD5_Init",
+// "AES-ECB", " use rc4") visible while dropping substring collisions such as
+// "desired"→DES or "checkpoint"→ECB, which are the dominant source of
+// weak-crypto false positives in Go and C binaries alike.
+func weakTokenIn(low, token string) bool {
+	if token == "" {
+		return false
+	}
+	for i := 0; ; {
+		j := strings.Index(low[i:], token)
+		if j < 0 {
+			return false
+		}
+		start := i + j
+		end := start + len(token)
+		var before, after byte
+		if start > 0 {
+			before = low[start-1]
+		}
+		if end < len(low) {
+			after = low[end]
+		}
+		if !isWordByte(before) && !isWordByte(after) {
+			return true
+		}
+		i = start + 1
+	}
+}
+
+// isWordByte reports whether b is an alphanumeric word character. Underscore
+// and every other byte are treated as delimiters so snake-cased API names
+// ("MD5_Init") and import paths ("crypto/md5") still match.
+func isWordByte(b byte) bool {
+	return (b >= 'a' && b <= 'z') || (b >= '0' && b <= '9')
 }
 
 // ---- sensitive strings ---------------------------------------------------

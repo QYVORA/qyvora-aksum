@@ -2,7 +2,9 @@
 
 `aksum` with no subcommand opens an interactive console: a persistent
 analysis session with a contextual prompt, command history, tab completion,
-and the same commands as the one-shot CLI. Nothing about analysis is
+and the same commands as the one-shot CLI. On a real terminal this is a
+readline console; when stdin is piped or redirected it degrades to a plain
+line reader with no banner or escape sequences. Nothing about analysis is
 reimplemented — the console drives the identical engine, renderers, and
 report schema.
 
