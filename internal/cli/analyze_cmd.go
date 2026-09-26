@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -95,7 +96,14 @@ seen, why the rule fired, and what validation would confirm it.`,
 					return err
 				}
 			} else {
-				renderAnalyze(p, report)
+				// When the event JSONL stream owns stdout, keep every human
+				// line on stderr so stdout stays pure JSONL (machine contract).
+				out := os.Stdout
+				if eventsFlag == "stdout" {
+					out = os.Stderr
+					p.SetOutput(out)
+				}
+				renderAnalyze(p, report, out)
 			}
 			if outPath != "" {
 				data, merr := json.MarshalIndent(report, "", "  ")
@@ -124,15 +132,15 @@ seen, why the rule fired, and what validation would confirm it.`,
 	return cmd
 }
 
-func renderAnalyze(p *output.Printer, r *engine.AnalyzeReport) {
+func renderAnalyze(p *output.Printer, r *engine.AnalyzeReport, w io.Writer) {
 	t := r.Target
 	p.Info("ANALYSIS", fmt.Sprintf("Target: %s (%s/%s)", t.Path, t.Format, t.Arch))
 	p.Info("ANALYSIS", fmt.Sprintf("Discovered %d functions; extracted %d strings (%d security-relevant); %d imports; %d call sites resolved (%d finding(s) validated).",
 		r.Summary.Functions, r.Summary.StringsExtracted, r.Summary.StringsClassified, r.Summary.Imports,
 		r.Summary.CallSitesResolved, r.Summary.ValidatedCount))
 
-	fmt.Printf("\nFINDINGS (%d)\n", len(r.Findings))
-	engine.RenderFindings(os.Stdout, r.Findings, true)
-	fmt.Printf("\n%d finding(s); by severity %v; by confidence %v\n",
+	fmt.Fprintf(w, "\nFINDINGS (%d)\n", len(r.Findings))
+	engine.RenderFindings(w, r.Findings, true)
+	fmt.Fprintf(w, "\n%d finding(s); by severity %v; by confidence %v\n",
 		len(r.Findings), r.Summary.BySeverity, r.Summary.ByConfidence)
 }

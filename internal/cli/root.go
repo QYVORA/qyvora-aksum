@@ -84,6 +84,12 @@ assess.`,
 					return usagef("invalid --events value %q (stdout, stderr, or file path)", eventsFlag)
 				}
 			}
+			if eventsFlag == "stdout" && formatFlag == "json" {
+				// stdout must carry exactly one machine stream. With the event
+				// JSONL stream owning stdout, the JSON report cannot share it:
+				// use --events stderr, --events <file>, or --report <file>.
+				return usagef("cannot combine --events stdout with --format json (one machine stream per descriptor); use --events stderr, --events <file>, or --report <path>")
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
