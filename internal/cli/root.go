@@ -12,9 +12,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 
-	"github.com/QYVORA/qyvora-aksum/internal/console"
 	"github.com/QYVORA/qyvora-aksum/internal/exitcode"
 	"github.com/QYVORA/qyvora-aksum/internal/version"
 )
@@ -50,7 +48,7 @@ var eventsFlag string
 func Execute() int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	return executeArgs(ctx, os.Args[1:])
+	return ExecuteArgsContext(ctx, os.Args[1:])
 }
 
 func newRootCmd() *cobra.Command {
@@ -96,18 +94,13 @@ assess.`,
 			if len(args) > 0 {
 				return usagef("unknown command %q (try 'aksum --help')", args[0])
 			}
-			// No subcommand: enter the interactive console (a TTY gets line
-			// editing and a banner; a pipe runs the same commands from a
-			// script). Machine-oriented global flags keep classic behavior.
+			// Machine-oriented global flags keep the classic behaviour: a
+			// redirected stdout, a machine report or an explicit event stream must
+			// not be handed a full-screen interface.
 			if formatFlag == "json" || eventsFlag != "" || quietFlag {
 				return cmd.Help()
 			}
-			console.New(console.Options{
-				Interactive: term.IsTerminal(int(os.Stdin.Fd())),
-				Out:         cmd.OutOrStdout(),
-				Err:         cmd.ErrOrStderr(),
-			}).Run(cmd.Context())
-			return nil
+			return runTUI(cmd.Root(), cmd.Context())
 		},
 		// Unknown subcommands are usage errors (exit 2).
 		Args: func(_ *cobra.Command, args []string) error {
@@ -128,13 +121,22 @@ assess.`,
 		return usageError{err}
 	})
 
-	root.AddCommand(newVersionCmd(), newAnalyzeCmd(), newDynamicCmd(), newUpdatesCmd())
+	root.AddCommand(commandTUI(),
+		newVersionCmd(), newAnalyzeCmd(), newDynamicCmd(), newUpdatesCmd())
 	registerTargetCommands(root)
 	registerCodeCommands(root)
 	return root
 }
 
-func executeArgs(ctx context.Context, args []string) int {
+// ExecuteArgsContext runs the command tree with an explicit argument vector
+// under a caller-supplied context and returns the process exit code.
+//
+// The interactive TUI drives this form: it runs commands in-process on its
+// own goroutine and must be able to cancel one execution without tearing
+// down the process, so the work follows a context the caller owns rather
+// than process-wide signal handling. The tree is rebuilt per call, so no
+// state survives from one execution to the next.
+func ExecuteArgsContext(ctx context.Context, args []string) int {
 	root := newRootCmd()
 	root.SetContext(ctx)
 	root.SetArgs(args)
