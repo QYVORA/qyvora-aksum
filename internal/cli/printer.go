@@ -1,14 +1,27 @@
 package cli
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 // eventsWriter resolves the --events flag to a stream destination.
-// "stdout"/"stderr" select those streams; anything else is a file path
-// created with restrictive permissions (analysis targets are untrusted;
-// never world-writable logs). An empty value selects no event stream.
+//
+//	""  and the disable words below   no event stream
+//	"stdout" / "stderr"                that stream
+//	anything else                      a file path
+//
+// The disable words are matched case-insensitively. Without them,
+// "--events off" fell through to the file branch and created a file
+// literally named "off" in the working directory, so the documented way
+// to turn the stream off silently created a file instead.
+//
+// A file destination is truncated rather than appended, so one file holds
+// exactly one run's events. Appending leaves no run boundary in the file,
+// which matters to anything tailing it.
 func eventsWriter() (*os.File, func() error, bool) {
-	switch eventsFlag {
-	case "":
+	switch strings.ToLower(eventsFlag) {
+	case "", "off", "none", "disable", "disabled":
 		return nil, nil, false
 	case "stdout":
 		return os.Stdout, func() error { return nil }, true
