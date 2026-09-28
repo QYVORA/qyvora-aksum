@@ -20,9 +20,10 @@ import (
 // exactly one run's events. Appending leaves no run boundary in the file,
 // which matters to anything tailing it.
 func eventsWriter() (*os.File, func() error, bool) {
-	switch strings.ToLower(eventsFlag) {
-	case "", "off", "none", "disable", "disabled":
+	if eventsDisabled(eventsFlag) {
 		return nil, nil, false
+	}
+	switch strings.ToLower(eventsFlag) {
 	case "stdout":
 		return os.Stdout, func() error { return nil }, true
 	case "stderr":
@@ -34,4 +35,18 @@ func eventsWriter() (*os.File, func() error, bool) {
 		}
 		return f, f.Close, true
 	}
+}
+
+// eventsDisabled reports whether a --events value asks for no stream at all.
+//
+// The interactive guard and the event plumbing both need this answer, so the
+// words live here once. A word that turns the stream off must not read as a
+// request to send it somewhere: `tool --events off` opens the session happily,
+// because there is nothing to contradict.
+func eventsDisabled(spec string) bool {
+	switch strings.ToLower(spec) {
+	case "", "off", "none", "disable", "disabled":
+		return true
+	}
+	return false
 }

@@ -31,6 +31,18 @@ func runTUI(root *cobra.Command, ctx context.Context) error {
 		return root.Help()
 	}
 
+	// A machine event destination and the interface are contradictory: one
+	// screen cannot hand the same bytes to a renderer and a file. The
+	// destination used to be ignored without a word, so a bare
+	// `--events out.jsonl` opened the session and wrote no file.
+	//
+	// The flag has to have been *asked for*, not merely be set. This tool's
+	// --events may default to a real destination so the stream is always on, and
+	// testing the value alone would refuse every ordinary interactive run.
+	if root.Flags().Changed("events") && !eventsDisabled(eventsFlag) {
+		return usageError{fmt.Errorf("cannot open the interactive session with a machine event destination (--events); the session transcript is already its event stream. Run a command for machine output, or drop --events to use the session.")}
+	}
+
 	runner := &tui.InProcessRunner{
 		ToolName: "aksum",
 		Execute:  ExecuteArgsContext,

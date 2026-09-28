@@ -95,9 +95,13 @@ assess.`,
 				return usagef("unknown command %q (try 'aksum --help')", args[0])
 			}
 			// Machine-oriented global flags keep the classic behaviour: a
-			// redirected stdout, a machine report or an explicit event stream must
+			// redirected stdout, a machine report or an explicit event stream.
+			// The event check asks whether a stream was actually asked for:
+			// `--events off` names a destination in order to say there is none,
+			// and treating that as a machine invocation would refuse an ordinary
+			// interactive run. must
 			// not be handed a full-screen interface.
-			if formatFlag == "json" || eventsFlag != "" || quietFlag {
+			if formatFlag == "json" || !eventsDisabled(eventsFlag) || quietFlag {
 				return cmd.Help()
 			}
 			return runTUI(cmd.Root(), cmd.Context())
