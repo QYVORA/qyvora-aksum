@@ -35,7 +35,7 @@
   <br/>
 
   <p style="color: rgba(238, 240, 238, 0.40); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
-    Built by <a href="https://qyvora.netlify.app" style="color: #66B870; text-decoration: none; border-bottom: 1px dotted rgba(102, 184, 112, 0.3);">QYVORA OffSec</a>
+    Built by <a href="https://qyvora.org" style="color: #66B870; text-decoration: none; border-bottom: 1px dotted rgba(102, 184, 112, 0.3);">QYVORA OffSec</a>
     — Tamale, Ghana
   </p>
 
@@ -254,7 +254,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 ## Contact
 
 QYVORA OffSec — Tamale, Ghana
-Website: https://qyvora.netlify.app · Security/Support: qyvorasec@gmail.com
+Website: https://qyvora.org · Security/Support: qyvorasec@gmail.com
 
 ---
 

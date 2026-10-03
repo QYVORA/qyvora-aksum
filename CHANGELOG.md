@@ -13,7 +13,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
   details. `aksum version` renders the complete identity block in terminal
   and JSON formats.
 - **Contact details** — the `version` command, README, and `SECURITY.md`
-  surface official QYVORA contact: https://qyvora.netlify.app ·
+  surface official QYVORA contact: https://qyvora.org ·
   qyvorasec@gmail.com · Tamale, Ghana.
 - **Weak-crypto false-positive reduction** — `weak-crypto-*` markers are now
   matched as standalone tokens (bounded by non-`[a-z0-9]`) instead of raw
