@@ -3,7 +3,7 @@ module github.com/QYVORA/qyvora-aksum
 go 1.26.5
 
 require (
-	github.com/QYVORA/qyvora-tui v0.7.0
+	github.com/QYVORA/qyvora-tui v0.7.1
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/arch v0.30.0
 	golang.org/x/term v0.45.0
