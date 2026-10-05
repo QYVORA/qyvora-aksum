@@ -1,68 +1,49 @@
-// Package banner provides the canonical AKSUM brand banner (ASCII art).
+// Package banner provides the canonical AKSUM brand banner.
 //
-// The art below is the exact byte-for-byte content of the brand banner file
-// aksum-banner.txt kept in the tools repository root (next to the sibling
-// tools' banner files). Every surface of the tool (interactive console,
-// terminal reports) renders this banner — never substitute custom art or
-// hand-written wordmarks.
+// The art below is generated from the tool name with `figlet -f slant` and is
+// kept byte-for-byte in aksum-banner.txt in the tools repository root, so a
+// plain-text copy exists that does not depend on this build.
+//
+// Art is deliberately plain: it is safe to write to a file, a log or a
+// machine-readable stream. Render applies the QYVORA brand green for terminal
+// output only, and degrades gracefully when the terminal cannot show it.
+//
+// Every surface of the tool renders this banner; never substitute custom art
+// or a hand-written wordmark.
 package banner
 
-// Art is the canonical AKSUM brand ASCII art banner.
-const Art = `                                                                      
-                                                                      
-                                                                      
-                                                                      
-                                 %%%%                                 
-                               %%%%%%%%                               
-                             @%%%%%%%%%%%                             
-                             %%%%%%%%%%%@                             
-                            @%%%++++++%%@@                            
-               :            @%%%@@::@@@%%@  :::       :               
-               %::          @%%%%%::@%%%%% :: %%@   ::%               
-                %::         @%%@%%::@%%%%% :: %%%  ::%                
-                %=:%           %%%::@%%    ::%%   %:=%                
-                %*:=        %%%%%%::@@@%%%   @%%  =:*%                
-                %#::%       %%%%:-++-:%%%@ @@    %-:#%                
-                %*::%       %%%%%-##-@@%%% @@::  %-:*@                
-                %-:+%       %%%%%:##:%%%*:   ::  %*:-%                
-               @=:-%%      @%%:*%:##:%%%%%   ::  %%-:-@               
-             @%::-%%       %%%%%%:##:@=:*@%@      %%-::%%             
-            %*::+%%%       %%%%%%:##:%%%+::%:::   %%%+::+%            
-          %+::-%%%%        %%%:*@:##:%%%%##%:::    @%%%=::=@          
-         :::=%%%%          %%%@%%:##:%%+#@%% ::      %%%%=::-         
-       :::+@%%%@           %%%%%%:##:%%%%%%@   %%%    @%%%%*:::       
-      ::+%%%%%             %%%%%+:##:%%%%%@%%::         %%%%%*::      
-     :-%%%%%%             @%%%*:*%%#:@+=-@%  ::          %%%%%%=:     
-    :*%%%%%=              %%@=-%%%%#:@=*-%@@ ::           =%%%%%#:    
-   :%%%%%%-:              @%%=-%%%%#:@@%%@@@@  @@         :-%%%%%%:   
-   %%%%%%%::              %%%=-@%%%#:%%-%@:::  @@         ::%%%%%%%*  
-  %%%%%%%+::              %%%-=%:#%#:@@-%%@@ @%           ::+@%%%%%%  
-  %%%%%%%*::             @%%%-+%:%%%::%@@-%%@             ::*%%%%%%%  
-  %%%%%%%%:::            %@%%-+%:%%%%*:%@-%%@ :          :::%%%%%%%%@ 
-  %%%%%%%%%:::           @%%%:*%:%%%%*:%%%%%@ :         :::%%%%%%%%%  
-   %%%%%%%%%#::::        @%%@=#%:%%%%*:%=*-%@        ::::*%%%%%%%%%@  
-    %%%%%%%%%%%=:::::    %%%%%%#:%%%%*:%=*-%%    :::::=%%%%%%%%%%%    
-     @%%%%%%%%%%%%%#*+-: @%%%%%#:%%%%*:%%%%%@ :-+*#%%%%%%%%%%%%%@     
-        %%%%%%%%%%%%%%%%%% @%%%#:%%%%*:%%%@ @%%%%%%%%%%%%%%%%%        
-            :::--=+*#%%%%%%@ @@%%%%%%*:%% @%%%%%%#*+=--:::            
-                ::::::-%%@%%%%  %%%%%%  @%%%@%%-::::::                
-                     #:::-%%%%%@  @@  @%%%%%-:::*                     
-                     %%%:::=%%%%%@  @%%%%%+:::%%%                     
-                     @%%% ::-%%%%%%%%%%%%-:: @%%@                     
-                      %%%  ::#%%%%@%%%%%#::  %%%                      
-                      %%%%%  *%%%%@%%%%%*  %%%%%                      
-                       @%%%%% %%%%@%%%%% @%%%%@                       
-                         %%%@:-%%%%%%%%-:@%%%                         
-                           %%+:@%%@%%%%:+%%                           
-                             #:+%%@%@%+:%                             
-                              ::%%@%%%::                              
-                              +%%%@@%%%+                              
-                              %%%%@@%%%%                              
-                                %%@%%%@                               
-                                 @@@@                                 
-                                                                      
-                                                                      
-                                                                      
-                                                                      
-                                                                      
+import (
+	"os"
+
+	"github.com/muesli/termenv"
+)
+
+// Green is the QYVORA brand accent, the colour every tool banner is drawn in.
+const Green = "#06B66F"
+
+// Art is the canonical AKSUM ASCII art banner.
+const Art = `         __                      
+  ____ _/ /_________  ______ ___ 
+ / __ ` + "`" + `/ //_/ ___/ / / / __ ` + "`" + `__ \
+/ /_/ / ,< (__  ) /_/ / / / / / /
+\__,_/_/|_/____/\__,_/_/ /_/ /_/ 
+                                 
 `
+
+// Render returns Art in the QYVORA brand green.
+//
+// The colour is resolved per call from the environment so a NO_COLOR request
+// or a terminal without truecolor is honoured rather than assumed away: when
+// the profile cannot show the brand colour the plain Art is returned unchanged.
+func Render() string {
+	profile := termenv.EnvColorProfile()
+	if profile == termenv.Ascii {
+		return Art
+	}
+	return termenv.String(Art).Foreground(profile.Color(Green)).String()
+}
+
+// Print writes Render to stdout.
+func Print() {
+	_, _ = os.Stdout.WriteString(Render())
+}
