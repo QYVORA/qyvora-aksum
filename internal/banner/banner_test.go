@@ -35,6 +35,20 @@ func TestRenderPreservesArt(t *testing.T) {
 	}
 }
 
+// TestWidthMatchesArt pins Width to the art it describes. A stale width is
+// worse than none: it is the number a caller uses to decide the banner fits.
+func TestWidthMatchesArt(t *testing.T) {
+	want := 0
+	for _, line := range strings.Split(strings.TrimRight(Art, "\n"), "\n") {
+		if n := len(line); n > want {
+			want = n
+		}
+	}
+	if Width != want {
+		t.Errorf("Width = %d, want %d (widest row of Art)", Width, want)
+	}
+}
+
 // TestGreenIsBrandAccent pins the brand colour so a well-meaning edit cannot
 // quietly repaint every tool.
 func TestGreenIsBrandAccent(t *testing.T) {
