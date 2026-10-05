@@ -1,5 +1,10 @@
 BINARY := aksum
-VERSION ?= dev
+# The common contract requires a semantic version and rejects "dev", and an
+# install from source stamps whatever VERSION holds. Defaulting it to "dev"
+# therefore shipped a binary that failed its own version check, so the
+# default is the released version. Override for a real build:
+#   make install-user VERSION=v1.2.3
+VERSION ?= 0.1.0
 GOFLAGS := -trimpath -ldflags="-s -w -X github.com/QYVORA/qyvora-aksum/internal/version.Version=$(VERSION)"
 
 PREFIX ?= /usr/local
