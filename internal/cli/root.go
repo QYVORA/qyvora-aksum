@@ -74,7 +74,7 @@ assess.`,
 		Version:       version.Version,
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			if formatFlag != "" && formatFlag != "terminal" && formatFlag != "json" {
-				return usagef("invalid --format %q (terminal, json)", formatFlag)
+				return usagef("invalid output format %q (terminal, json)", formatFlag)
 			}
 			if eventsFlag != "" && eventsFlag != "stdout" && eventsFlag != "stderr" {
 				// File paths are allowed too; validate creatable lazily per command.
@@ -86,7 +86,7 @@ assess.`,
 				// stdout must carry exactly one machine stream. With the event
 				// JSONL stream owning stdout, the JSON report cannot share it:
 				// use --events stderr, --events <file>, or --report <file>.
-				return usagef("cannot combine --events stdout with --format json (one machine stream per descriptor); use --events stderr, --events <file>, or --report <path>")
+				return usagef("cannot combine --events stdout with --output json (one machine stream per descriptor); use --events stderr, --events <file>, or --report <path>")
 			}
 			return nil
 		},
@@ -118,7 +118,12 @@ assess.`,
 	}
 
 	pf := root.PersistentFlags()
-	pf.StringVarP(&formatFlag, "format", "f", "", "output format: terminal, json")
+	// -o/--output is the flag the shared conformance layer drives every
+	// framework with ("version -o json"). --format/-f is kept as an alias so
+	// existing aksum callers and scripts keep working; both write the same
+	// variable, so whichever appears last on the command line wins.
+	pf.StringVarP(&formatFlag, "output", "o", "", "output format: terminal, json")
+	pf.StringVarP(&formatFlag, "format", "f", "", "output format: terminal, json (alias for --output)")
 	pf.BoolVarP(&quietFlag, "quiet", "q", false, "suppress non-error terminal output")
 	pf.StringVar(&eventsFlag, "events", "", "emit JSONL event stream to stdout, stderr, or a file path")
 

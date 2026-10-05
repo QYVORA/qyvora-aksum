@@ -17,7 +17,7 @@ func newVersionCmd() *cobra.Command {
 		Short: "Print the aksum version",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			info := version.GetInfo()
-			// Both the local --json flag and the global --format json select
+			// Both the local --json flag and the global --output json select
 			// machine-readable output, matching the toolchain-wide contract.
 			if jsonOut || newPrinter().Format() == "json" {
 				return json.NewEncoder(os.Stdout).Encode(info) //nolint:err113 // stable payload

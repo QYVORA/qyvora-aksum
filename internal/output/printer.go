@@ -4,7 +4,7 @@
 //
 //	[12:41:03] [AKSUM] [PHASE] message
 //
-// Machine-readable output (--format json) must never be mixed with terminal
+// Machine-readable output (--output json) must never be mixed with terminal
 // decoration: branding and progress belong to human interfaces only.
 package output
 

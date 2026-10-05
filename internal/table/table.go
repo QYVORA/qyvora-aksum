@@ -7,7 +7,7 @@
 // result sets. Tables use clean aligned columns with no box-drawing borders
 // or horizontal rules, matching the ecosystem's console style.
 //
-// Tables are presentation-only: machine-readable output (--format json)
+// Tables are presentation-only: machine-readable output (--output json)
 // never passes through this package.
 package table
 

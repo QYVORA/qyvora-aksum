@@ -8,7 +8,8 @@ Global flags (apply to every command):
 
 | Flag | Values | Purpose |
 |------|--------|---------|
-| `-f, --format` | `terminal` \| `json` | structured output on stdout |
+| `-o, --output` | `terminal` \| `json` | structured output on stdout |
+| `-f, --format` | `terminal` \| `json` | alias for `--output` |
 | `-q, --quiet` | — | suppress non-error terminal output |
 | `--events` | `stdout` \| `stderr` \| path | JSONL event stream |
 
