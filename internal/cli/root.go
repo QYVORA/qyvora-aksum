@@ -39,9 +39,12 @@ func unsupportedf(format string, a ...any) error {
 
 func (u unsupportedError) Error() string { return u.msg }
 
-var formatFlag string
-var quietFlag bool
-var eventsFlag string
+var (
+	updateFlag bool
+	formatFlag string
+	quietFlag  bool
+	eventsFlag string
+)
 
 // Execute runs the root command against os.Args and returns the exit code.
 // The caller owns process termination.
@@ -118,6 +121,7 @@ assess.`,
 	}
 
 	pf := root.PersistentFlags()
+	pf.BoolVar(&updateFlag, "update", false, "update the CLI to the latest official release")
 	// -o/--output is the flag the shared conformance layer drives every
 	// framework with ("version -o json"). --format/-f is kept as an alias so
 	// existing aksum callers and scripts keep working; both write the same
