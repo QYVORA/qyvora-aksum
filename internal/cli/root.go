@@ -137,7 +137,7 @@ assess.`,
 	})
 
 	root.AddCommand(commandTUI(),
-		newVersionCmd(), newAnalyzeCmd(), newDynamicCmd(), newUpdatesCmd())
+		newVersionCmd(), newAnalyzeCmd(), newDynamicCmd(), newUpdatesCmd(), newCapabilitiesCmd())
 	registerTargetCommands(root)
 	registerCodeCommands(root)
 	return root
