@@ -29,6 +29,25 @@ const (
 	ConfConfirmed Confidence = "CONFIRMED"
 )
 
+// NoiseLevel defines the OPSEC footprint of an operation
+type NoiseLevel string
+
+const (
+	NoiseLevelPassive    NoiseLevel = "passive"    // No active probing, analysis only
+	NoiseLevelLow        NoiseLevel = "low"        // Minimal interaction, basic enumeration
+	NoiseLevelModerate   NoiseLevel = "moderate"   // Active testing, noticeable
+	NoiseLevelAggressive NoiseLevel = "aggressive" // Exploitation attempts, highly visible
+)
+
+// Tier represents the capability tier that generated a finding
+type Tier string
+
+const (
+	TierRecon        Tier = "recon"        // Tier 1: Discovery and enumeration
+	TierTechnique    Tier = "technique"    // Tier 2: Vulnerability identification
+	TierExploitation Tier = "exploitation" // Tier 3: Active exploitation
+)
+
 var confRank = map[Confidence]int{
 	ConfSuspected: 1, ConfCandidate: 2, ConfObserved: 2, ConfValidated: 3, ConfConfirmed: 4,
 }
@@ -69,10 +88,25 @@ type Finding struct {
 	Category    string     `json:"category"`
 	Severity    Severity   `json:"severity"`
 	Confidence  Confidence `json:"confidence"`
+	Tier        Tier       `json:"tier,omitempty"` // Capability tier that generated this finding
 	Description string     `json:"description"`
 	Reason      string     `json:"detection_reason"`
 	Validation  string     `json:"validation"`
 	Evidence    []Evidence `json:"evidence"`
+}
+
+// TierPrefix returns a display prefix for the finding's tier
+func (f *Finding) TierPrefix() string {
+	switch f.Tier {
+	case TierRecon:
+		return "[RECON]"
+	case TierTechnique:
+		return "[TECHNIQUE]"
+	case TierExploitation:
+		return "[EXPLOIT]"
+	default:
+		return ""
+	}
 }
 
 // Builder incrementally assembles a finding and computes its stable ID.
