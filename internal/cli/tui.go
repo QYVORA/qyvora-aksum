@@ -52,6 +52,7 @@ func runTUI(root *cobra.Command, ctx context.Context) error {
 	code, err := tui.Run(tui.Config{
 		Title:   "QYVORA / AKSUM",
 		Version: version.String(),
+		Banner:  tui.ToolBanner("AKSUM", "Binary Security Assessment Platform"),
 		Runner:  runner,
 		Out:     os.Stdout,
 	})
