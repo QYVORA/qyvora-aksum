@@ -62,9 +62,8 @@ func newRootCmd() *cobra.Command {
 		Short: "Binary security assessment & reverse-engineering platform",
 		Long: `aksum is a terminal-first binary-security assessment platform.
 
-Run it with no arguments to enter an interactive console session
-(contextual prompt, command history, tab completion), or use the
-same commands one-shot: aksum analyze <target>, aksum strings ...
+Run it with no arguments to print this help; every command is one-shot:
+aksum analyze <target>, aksum strings <target>, aksum imports <target>, ...
 
 It identifies a binary, enumerates its structure (sections, segments,
 symbols, imports), analyzes strings and code, discovers functions,
