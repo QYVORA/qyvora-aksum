@@ -1,3 +1,10 @@
+//go:build ignore
+
+// This file holds the previous per-tool interactive TUI entrypoint. It is
+// intentionally left unwired pending the redirect of qyvora-tui to the future
+// AI orchestration layer (qyvora-ai, Phase 5): the 14 frameworks are one-shot
+// CLI only. Do not re-register commandTUI without revisiting that decision.
+
 package cli
 
 import (

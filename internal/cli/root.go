@@ -99,22 +99,11 @@ assess.`,
 			if len(args) > 0 {
 				return usagef("unknown command %q (try 'aksum --help')", args[0])
 			}
-			// Machine-oriented global flags keep the classic behaviour: a
-			// redirected stdout, a machine report, or a quiet run must not be
-			// handed a full-screen interface.
-			//
-			// An event destination is deliberately not listed here. It used to
-			// be, which meant `aksum --events out.jsonl` printed the help text
-			// and said nothing about why. runTUI refuses that combination with
-			// an explanation, and refusing a TTY run is safe there because the
-			// interactive check below still sends redirected output to help.
-			if formatFlag == "json" || quietFlag {
-				return cmd.Help()
-			}
-			if flagNoTui {
-				return cmd.Root().Help()
-			}
-			return runTUI(cmd.Root(), cmd.Context())
+			// The bare invocation is one-shot CLI only: print usage rather
+			// than drop into an interactive interface. The per-tool TUI is
+			// disabled pending the redirect of qyvora-tui to the future AI
+			// orchestration layer.
+			return cmd.Root().Help()
 		},
 		// Unknown subcommands are usage errors (exit 2).
 		Args: func(_ *cobra.Command, args []string) error {
@@ -142,8 +131,7 @@ assess.`,
 		return usageError{err}
 	})
 
-	root.AddCommand(commandTUI(),
-		newVersionCmd(), newAnalyzeCmd(), newDynamicCmd(), newUpdatesCmd(), newCapabilitiesCmd())
+	root.AddCommand(newVersionCmd(), newAnalyzeCmd(), newDynamicCmd(), newUpdatesCmd(), newCapabilitiesCmd())
 	registerTargetCommands(root)
 	registerCodeCommands(root)
 	return root
