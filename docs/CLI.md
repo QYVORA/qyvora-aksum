@@ -1,99 +1,71 @@
 # CLI Reference
 
-Running `aksum` with **no subcommand** opens the [interactive console](Console.md)
-— same engine and commands in a persistent session. Every command below also
-works one-shot.
+`aksum` is a one-shot command-line tool. Every command follows the
+shared QYVORA tier grammar:
 
-Global flags (apply to every command):
+```
+aksum <tier> <module> [<action>] [target] [flags]
+```
 
-| Flag | Values | Purpose |
-|------|--------|---------|
-| `-o, --output` | `terminal` \| `json` | structured output on stdout |
-| `-f, --format` | `terminal` \| `json` | alias for `--output` |
-| `-q, --quiet` | — | suppress non-error terminal output |
-| `--events` | `stdout` \| `stderr` \| path | JSONL event stream |
+`<tier>` is one of `recon` (discovery, collection, enumeration and
+analysis), `exploit` (active testing and exploitation), or `report`
+(findings, evidence and reports). Running `aksum` with no
+arguments prints this help. Every pre-tier command remains available as
+a hidden alias, so existing scripts keep working.
 
-Exit codes: `0` success · `1` runtime · `2` usage · `3` unsupported target ·
-`130` interrupted.
+Exit codes: `0` success &middot; `1` runtime failure &middot; `2` usage error
+&middot; `3` unsupported target &middot; `130` interrupted.
 
-## Identification
+## recon
 
-### `aksum binary <target>`
-
-Identify format, architecture, endianness, linking, entry point and the
-hardening posture (PIE / NX / RELRO / canary / fortify / stripped). RAW files
-print "unknown container" honestly. Flags: `--events`.
-
-## Structure
+Discovery, collection, enumeration and analysis modules.
 
 | Command | Purpose |
 |---------|---------|
-| `aksum sections <target>` | sections with address, size, permissions |
-| `aksum segments <target>` | program headers with rwx permissions |
-| `aksum symbols <target> [--dynamic]` | static `.symtab`; `--dynamic` for `.dynsym` |
-| `aksum imports <target>` | imported functions grouped by security relevance |
+| `aksum recon analyze` | Run the full static assessment pipeline |
+| `aksum recon binary` | Identify a binary and its security properties |
+| `aksum recon calls` | Show the call graph (direct calls between functions) |
+| `aksum recon cfg` | Per-function control-flow graph metrics (or full blocks) |
+| `aksum recon disassemble Disassemble a function or the executable region` | — |
+| `aksum recon dynamic` | Dynamic-analysis planning and execution architecture |
+| `aksum recon functions` | Discover functions with evidence-backed confidence |
+| `aksum recon imports` | List imported functions grouped by security relevance |
+| `aksum recon pe` | Identify a PE image and enumerate sections and imports |
+| `aksum recon sections` | List ELF sections with addresses, sizes, permissions |
+| `aksum recon segments` | List program headers (segments) with rwx permissions |
+| `aksum recon strings` | Extract and security-classify embedded strings |
+| `aksum recon surface` | Summarize the binary's externally observable attack surface |
+| `aksum recon symbols` | List symbols (static table; --dynamic for .dynsym) |
+| `aksum recon xrefs` | Cross-references to an address or data string |
 
-## Strings
+## exploit
 
-### `aksum strings <target>`
+Active-testing and exploitation modules.
 
-Extract printable strings and classify them (url, ipv4, path, command, sql,
-credential-shaped, env-like, key material, crypto marker) with per-string
-confidence. Works on any file: ELF targets are scanned by section; RAW files
-are scanned whole as `<raw>`.
+_No exploit-tier modules._
 
-Flags: `--min-length N` (default 4) · `--utf16` (also scan UTF-16LE runs) ·
-`--max N` (cap reported strings).
+## report
 
-## Code
+Findings, evidence and report rendering.
 
-| Command | Purpose |
-|---------|---------|
-| `aksum functions <target>` | discovered functions with provenance + confidence; `--min-confidence high\|medium\|low` |
-| `aksum disassemble <target>` | decode a function (`--symbol name`) or region (`--addr 0x…`, `--limit N`) |
-| `aksum cfg <target>` | per-function CFG metrics; `--func name` for one function, `--blocks` to dump blocks |
-| `aksum calls <target>` | direct-call graph; filter with `--func name` |
-| `aksum xrefs <target>` | references to `--addr 0x…` or `--string "text"` |
+_No report-tier modules._
 
-## Assessment
-
-### `aksum analyze <target>`
-
-Full pipeline: identify → strings → dataflow → checks → validation → report.
-Flags: `--min-severity info|low|medium|high|critical` · `--report path` ·
-`--events`. Emits the complete event lifecycle (see [Reporting](Reporting.md)).
-
-### `aksum surface <target>`
-
-Attack-surface aggregation: entry points, security-relevant import
-categories, exports, string classes. Observation counts only.
-
-### `aksum dynamic plan <target>`
-
-Build an auditable dynamic-analysis execution plan under a mechanical safety
-policy. The plan is JSON with target identity (incl. SHA-256), resolved argv,
-and every policy bound. Flags:
-
-| Flag | Default | Constraint |
-|------|---------|------------|
-| `--yes` | off | **required** — explicit consent to plan execution |
-| `--timeout` | `5s` | ≤ 5m |
-| `--allow-network` | off | network stays denied unless passed |
-| `--allow-file-write` | off | writes stay denied unless passed |
-| `--max-output-bytes` | 1048576 | 1 KiB – 64 MiB |
-| `--arg` | — | repeatable; appended to argv |
-
-RAW targets are refused (exit 3): aksum does not plan execution of content it
-cannot identify.
-
-### `aksum dynamic run <target>`
-
-Refuses in this build (exit 3): no execution backend is bundled. The command
-exists so orchestrators get a typed, honest answer rather than a silent no-op.
-
-## Misc
+## Utilities
 
 | Command | Purpose |
 |---------|---------|
-| `aksum version [-f json]` | version stamp (`framework` + `version`) |
-| `aksum completion <shell>` | shell completions |
+| `aksum capabilities Print the machine-readable capability contract` | — |
+
+## Global flags
+
+| Flag | Purpose |
+|------|---------|
+| `--events string   emit JSONL event stream to stdout, stderr, or a file path` | — |
+| `-f, --format string   output format: terminal, json (alias for --output)` | — |
+| `-h, --help            help for aksum` | — |
+| `--no-tui          Disable TUI and print banner/help` | — |
+| `-o, --output string   output format: terminal, json` | — |
+| `-q, --quiet           suppress non-error terminal output` | — |
+| `--update          update the CLI to the latest official release` | — |
+| `-v, --version         version for aksum` | — |
+

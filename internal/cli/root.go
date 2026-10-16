@@ -44,8 +44,6 @@ var (
 	formatFlag string
 	quietFlag  bool
 	eventsFlag string
-
-	flagNoTui bool
 )
 
 // Execute runs the root command against os.Args and returns the exit code.
@@ -131,7 +129,6 @@ assess.`,
 	pf.StringVarP(&formatFlag, "format", "f", "", "output format: terminal, json (alias for --output)")
 	pf.BoolVarP(&quietFlag, "quiet", "q", false, "suppress non-error terminal output")
 	pf.StringVar(&eventsFlag, "events", "", "emit JSONL event stream to stdout, stderr, or a file path")
-	pf.BoolVar(&flagNoTui, "no-tui", false, "Disable TUI and print banner/help")
 
 	root.SetVersionTemplate(fmt.Sprintf("aksum %s\n", version.Version))
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
