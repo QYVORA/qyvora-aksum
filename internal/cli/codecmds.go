@@ -13,9 +13,10 @@ import (
 	"github.com/QYVORA/qyvora-aksum/internal/engine"
 )
 
-// registerCodeCommands adds the disassembly/analysis command family.
-func registerCodeCommands(root *cobra.Command) {
-	root.AddCommand(
+// registerCodeCommands adds the disassembly/analysis command family to parent
+// (the recon tier).
+func registerCodeCommands(parent *cobra.Command) {
+	parent.AddCommand(
 		newFunctionsCmd(),
 		newDisassembleCmd(),
 		newCallsCmd(),

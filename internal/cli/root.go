@@ -62,8 +62,11 @@ func newRootCmd() *cobra.Command {
 		Short: "Binary security assessment & reverse-engineering platform",
 		Long: `aksum is a terminal-first binary-security assessment platform.
 
-Run it with no arguments to print this help; every command is one-shot:
-aksum analyze <target>, aksum strings <target>, aksum imports <target>, ...
+Commands follow the shared tier grammar
+<tool> <tier> <module> [<action>] [target] [flags]: every analysis module
+lives under the recon tier. Run it with no arguments to print this help;
+analysis is one-shot, e.g. aksum recon analyze <target>,
+aksum recon strings <target>, aksum recon imports <target>.
 
 It identifies a binary, enumerates its structure (sections, segments,
 symbols, imports), analyzes strings and code, discovers functions,
@@ -73,6 +76,11 @@ backed findings with explicit confidence.
 
 Authorized use only: analyze software you own or are authorized to
 assess.`,
+		Example: `  aksum recon analyze ./sample.bin
+  aksum recon strings ./sample.bin --min-length 6
+  aksum recon symbols ./sample.bin --output json
+  aksum recon dynamic plan ./sample.bin
+  aksum recon functions ./sample.bin --min-confidence high`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Version:       version.Version,
@@ -130,10 +138,70 @@ assess.`,
 		return usageError{err}
 	})
 
-	root.AddCommand(newVersionCmd(), newAnalyzeCmd(), newDynamicCmd(), newUpdatesCmd(), newCapabilitiesCmd())
-	registerTargetCommands(root)
-	registerCodeCommands(root)
+	root.AddCommand(newVersionCmd(), newUpdatesCmd(), newCapabilitiesCmd())
+
+	// Tier grammar: <tool> <tier> <module> [<action>] [target] [flags].
+	// aksum is a read-only analysis platform, so every module lives under
+	// recon. The exploit and report tiers always exist so the command shape
+	// is uniform across tools; each explains its own emptiness instead of
+	// rendering as a blank parent.
+	recon := &cobra.Command{
+		Use:   "recon",
+		Short: "binary discovery and analysis modules",
+	}
+	recon.AddCommand(newAnalyzeCmd(), newDynamicCmd())
+	registerTargetCommands(recon)
+	registerCodeCommands(recon)
+
+	exploit := &cobra.Command{
+		Use:   "exploit",
+		Short: "offensive modules",
+		RunE: func(*cobra.Command, []string) error {
+			return usagef("the exploit tier is empty: aksum analyzes binaries read-only and never executes or modifies a target")
+		},
+	}
+	report := &cobra.Command{
+		Use:   "report",
+		Short: "reporting modules",
+		RunE: func(*cobra.Command, []string) error {
+			return usagef("the report tier is empty: write a full report with 'aksum recon analyze <target> --report <path>'")
+		},
+	}
+	root.AddCommand(recon, exploit, report)
+
+	// Backward-compatible top-level aliases. The tier form is the supported
+	// grammar, but every pre-tier invocation keeps working as a hidden
+	// command so existing scripts and muscle memory are not broken. Cobra
+	// does not suggest hidden commands, so help stays clean.
+	root.AddCommand(
+		hiddenAlias("analyze", newAnalyzeCmd()),
+		hiddenAlias("binary", newBinaryCmd()),
+		hiddenAlias("pe", newPECmd()),
+		hiddenAlias("sections", newSectionsCmd()),
+		hiddenAlias("segments", newSegmentsCmd()),
+		hiddenAlias("symbols", newSymbolsCmd()),
+		hiddenAlias("imports", newImportsCmd()),
+		hiddenAlias("strings", newStringsCmd()),
+		hiddenAlias("surface", newSurfaceCmd()),
+		hiddenAlias("dynamic", newDynamicCmd()),
+		hiddenAlias("functions", newFunctionsCmd()),
+		hiddenAlias("disassemble", newDisassembleCmd()),
+		hiddenAlias("calls", newCallsCmd()),
+		hiddenAlias("cfg", newCfgCmd()),
+		hiddenAlias("xrefs", newXrefsCmd()),
+	)
 	return root
+}
+
+// hiddenAlias registers a command under its bare name, hidden from help, so
+// the pre-tier invocation form keeps resolving. The trailing usage breadcrumb
+// (e.g. "dynamic <plan|run> <target>") is preserved.
+func hiddenAlias(name string, cmd *cobra.Command) *cobra.Command {
+	if old := cmd.Name(); name != old {
+		cmd.Use = name + cmd.Use[len(old):]
+	}
+	cmd.Hidden = true
+	return cmd
 }
 
 // ExecuteArgsContext runs the command tree with an explicit argument vector

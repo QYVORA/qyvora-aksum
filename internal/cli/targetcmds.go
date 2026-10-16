@@ -15,10 +15,11 @@ import (
 	"github.com/QYVORA/qyvora-aksum/internal/output"
 )
 
-// registerTargetCommands adds every command that takes a binary target.
-// All share the same argument shape: <target> as the sole positional arg.
-func registerTargetCommands(root *cobra.Command) {
-	root.AddCommand(
+// registerTargetCommands adds every command that takes a binary target to
+// parent (the recon tier). All share the same argument shape: <target> as the
+// sole positional arg.
+func registerTargetCommands(parent *cobra.Command) {
+	parent.AddCommand(
 		newBinaryCmd(),
 		newPECmd(),
 		newSectionsCmd(),
