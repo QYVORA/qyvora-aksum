@@ -40,10 +40,11 @@ func unsupportedf(format string, a ...any) error {
 func (u unsupportedError) Error() string { return u.msg }
 
 var (
-	updateFlag bool
-	formatFlag string
-	quietFlag  bool
-	eventsFlag string
+	updateFlag    bool
+	formatFlag    string
+	quietFlag     bool
+	eventsFlag    string
+	allowShellOut bool
 )
 
 // Execute runs the root command against os.Args and returns the exit code.
@@ -129,13 +130,14 @@ assess.`,
 	pf.StringVarP(&formatFlag, "format", "f", "", "output format: terminal, json (alias for --output)")
 	pf.BoolVarP(&quietFlag, "quiet", "q", false, "suppress non-error terminal output")
 	pf.StringVar(&eventsFlag, "events", "", "emit JSONL event stream to stdout, stderr, or a file path")
+	pf.BoolVar(&allowShellOut, "allow-shellout", false, "allow scripts to use exec/run.cmd shell-out (also via QYVORA_ALLOW_SHELLOUT=1)")
 
 	root.SetVersionTemplate(fmt.Sprintf("aksum %s\n", version.Version))
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
 		return usageError{err}
 	})
 
-	root.AddCommand(newVersionCmd(), newUpdatesCmd(), newCapabilitiesCmd())
+	root.AddCommand(newVersionCmd(), newUpdatesCmd(), newCapabilitiesCmd(), newScriptCmd())
 
 	// Tier grammar: <tool> <tier> <module> [<action>] [target] [flags].
 	// aksum is a read-only analysis platform, so every module lives under

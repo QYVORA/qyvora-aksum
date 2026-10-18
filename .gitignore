@@ -9,6 +9,9 @@ dist/
 *.o
 *.out
 
+# Generated script report (example)
+aksum-report.json
+
 # AI session files
 continue_AI.md
 continue_AI.sh
