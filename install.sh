@@ -79,8 +79,8 @@ QYVORA_MIN_GO="1.26"
 QYVORA_ICON="aksum.png"
 QYVORA_ICO="aksum.ico"
 QYVORA_DESKTOP_NAME="AKSUM"
-QYVORA_DESKTOP_COMMENT="K Cryptographic Assurance and Verification Platform"
-QYVORA_DESKTOP_KEYWORDS="kyber;pqc;post-quantum;cryptography;fips;ml-kem;ml-dsa;slh-dsa;assurance"
+QYVORA_DESKTOP_COMMENT="Binary analysis and reverse engineering"
+QYVORA_DESKTOP_KEYWORDS="binary;elf;disassembly;reverse-engineering;functions;symbols;security"
 # Ordered probes used to prove the installed binary runs
 QYVORA_VERSION_PROBE="--version version --help"
 # Additional .desktop entry, if the upstream asset ships one
