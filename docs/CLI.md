@@ -106,4 +106,4 @@ aksum <tier> <module> [<action>] [target] [flags]
 | `aksum symbols` | List symbols (static table; --dynamic for .dynsym) |
 | `aksum tui` | start the interactive terminal application |
 | `aksum xrefs` | Cross-references to an address or data string |
-
+| `docs script <file>` | Run a `.qs` script with the shared scripting engine (`run`/`build` subcommands) |
