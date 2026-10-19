@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/QYVORA/qyvora-aksum/internal/banner"
 	"github.com/QYVORA/qyvora-aksum/internal/exitcode"
 	"github.com/QYVORA/qyvora-aksum/internal/version"
 )
@@ -59,7 +60,8 @@ func newRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "aksum",
 		Short: "Binary security assessment & reverse-engineering platform",
-		Long: `aksum is a terminal-first binary-security assessment platform.
+		Long: banner.Render() + "\n\n  " + banner.Tagline + " — " + version.CompanyName +
+			"\n  " + version.CompanyURL + "\n  Built in " + version.CompanyCity + "\n\n" + `aksum is a terminal-first binary-security assessment platform.
 
 Commands follow the shared tier grammar
 <tool> <tier> <module> [<action>] [target] [flags]: every analysis module
@@ -70,8 +72,8 @@ aksum recon strings <target>, aksum recon imports <target>.
 It identifies a binary, enumerates its structure (sections, segments,
 symbols, imports), analyzes strings and code, discovers functions,
 builds call/control-flow graphs, classifies security-relevant APIs,
-maps attack surface, and reports candidate weaknesses as evidence-
-backed findings with explicit confidence.
+maps attack surface, and reports candidate weaknesses as
+evidence-backed findings with explicit confidence.
 
 Authorized use only: analyze software you own or are authorized to
 assess.`,
