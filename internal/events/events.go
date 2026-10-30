@@ -9,16 +9,13 @@
 package events
 
 import (
-	"crypto/rand"
-	"encoding/hex"
-	"encoding/json"
 	"io"
-	"sync"
-	"time"
+
+	shared "github.com/QYVORA/qyvora-events"
 )
 
 // SchemaVersion is the event schema version every emitted event carries.
-const SchemaVersion = "1.0"
+const SchemaVersion = shared.SchemaVersion
 
 // Event names. Shared verbs use the ecosystem spelling exactly; aksum adds
 // binary-analysis-specific verbs prefixed with "binary." / "function." /
@@ -43,60 +40,13 @@ const (
 
 // Level values for the envelope's level field.
 const (
-	LevelInfo    = "info"
-	LevelWarning = "warning"
-	LevelError   = "error"
+	LevelInfo    = shared.LevelInfo
+	LevelWarning = shared.LevelWarning
+	LevelError   = shared.LevelError
 )
 
-// Event is the wire shape of one event line.
-type Event struct {
-	SchemaVersion string         `json:"schema_version"`
-	Timestamp     time.Time      `json:"timestamp"`
-	ExecutionID   string         `json:"execution_id"`
-	Framework     string         `json:"framework"`
-	Level         string         `json:"level"`
-	Event         string         `json:"event"`
-	Data          map[string]any `json:"data,omitempty"`
-}
+type Event = shared.Event
+type Stream = shared.Stream
 
-// Stream writes events as JSONL to w. It is safe for concurrent use.
-type Stream struct {
-	mu          sync.Mutex
-	w           io.Writer
-	executionID string
-}
-
-// NewStream returns a stream bound to a freshly generated execution id.
-func NewStream(w io.Writer) *Stream {
-	return &Stream{w: w, executionID: newExecutionID()}
-}
-
-// Emit writes one event. Data may be nil.
-func (s *Stream) Emit(level, name string, data map[string]any) {
-	if s == nil || s.w == nil {
-		return
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	ev := Event{
-		SchemaVersion: SchemaVersion,
-		Timestamp:     time.Now().UTC(),
-		ExecutionID:   s.executionID,
-		Framework:     "aksum",
-		Level:         level,
-		Event:         name,
-		Data:          data,
-	}
-	enc := json.NewEncoder(s.w)
-	if err := enc.Encode(ev); err != nil {
-		return // stream closed or unwritable; nothing sensible left to do
-	}
-}
-
-func newExecutionID() string {
-	var b [16]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		return "aksum-" + time.Now().UTC().Format("20060102T150405.000000000")
-	}
-	return hex.EncodeToString(b[:])
-}
+// NewStream returns a stream bound to aksum.
+func NewStream(w io.Writer) *Stream { return shared.NewStream(w, "aksum") }
