@@ -7,6 +7,7 @@ require (
 	github.com/QYVORA/qyvora-tui v0.11.0
 	github.com/muesli/termenv v0.16.0
 	github.com/spf13/cobra v1.10.2
+	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/arch v0.30.0
 	golang.org/x/term v0.45.0
 )
@@ -14,7 +15,7 @@ require (
 require github.com/QYVORA/qyvora-models v0.1.1 // indirect
 
 require (
-	github.com/QYVORA/qyvora-events v0.1.1
+	github.com/QYVORA/qyvora-events v0.2.0
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/bubbles v1.0.0 // indirect

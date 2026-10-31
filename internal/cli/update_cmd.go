@@ -4,10 +4,8 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
@@ -31,13 +29,13 @@ No Go toolchain, Git, or source checkout is required.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts := selfupdate.Options{Out: cmd.OutOrStdout()}
-			jsonMode := formatFlag == "json" || quietFlag
-			if jsonMode {
+			machineMode := (formatFlag != "" && formatFlag != "terminal") || quietFlag
+			if machineMode {
 				opts.Quiet = true
 			}
 
 			res, err := selfupdate.Run(cmd.Context(), updatecfg.Config(), opts)
-			if jsonMode {
+			if machineMode {
 				payload := map[string]string{
 					"framework": "aksum",
 					"command":   "updates",
@@ -61,7 +59,11 @@ No Go toolchain, Git, or source checkout is required.`,
 						payload["kind"] = string(ue.Kind)
 					}
 				}
-				if jerr := json.NewEncoder(os.Stdout).Encode(payload); jerr != nil { //nolint:err113 // stable payload
+				p := newPrinter()
+				if formatFlag == "" {
+					p.SetFormat("json")
+				}
+				if jerr := p.Print(payload); jerr != nil { //nolint:err113 // stable payload
 					return jerr
 				}
 			}

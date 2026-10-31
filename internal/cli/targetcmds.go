@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -68,8 +67,8 @@ Values that cannot be determined from the file are reported as
 				return err
 			}
 			p := newPrinter()
-			if p.Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(t)
+			if p.Format() != "terminal" {
+				return p.Print(t)
 			}
 			renderTarget(p, t)
 			return nil
@@ -160,8 +159,8 @@ func newImportsCmd() *cobra.Command {
 			defer im.Close() //nolint:errcheck // read-only
 			imports := im.Imports()
 			groups := engine.ClassifyImports(imports)
-			if newPrinter().Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(map[string]any{ //nolint:err113 // stable payload
+			if p := newPrinter(); p.Format() != "terminal" {
+				return p.Print(map[string]any{ //nolint:err113 // stable payload
 					"total":         len(imports),
 					"groups":        groups,
 					"uncategorized": engine.UncategorizedImports(imports),
@@ -208,8 +207,8 @@ func newStringsCmd() *cobra.Command {
 				all = strscan.ExtractRaw(data, opts)
 			}
 			classified := strscan.ClassifyAll(all)
-			if newPrinter().Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(map[string]any{ //nolint:err113 // stable payload
+			if p := newPrinter(); p.Format() != "terminal" {
+				return p.Print(map[string]any{ //nolint:err113 // stable payload
 					"total":      len(all),
 					"strings":    all,
 					"classified": classified,

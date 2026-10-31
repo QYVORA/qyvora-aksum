@@ -91,8 +91,8 @@ seen, why the rule fired, and what validation would confirm it.`,
 			}
 
 			p := newPrinter()
-			if p.Format() == "json" {
-				if err := json.NewEncoder(os.Stdout).Encode(report); err != nil {
+			if p.Format() != "terminal" {
+				if err := p.Print(report); err != nil {
 					return err
 				}
 			} else {

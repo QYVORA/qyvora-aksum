@@ -19,12 +19,13 @@ func newPrinter() *output.Printer {
 	return p
 }
 
-// emit renders v: a table in terminal mode, JSON in json mode. Terminal
-// rendering delegates to the shared engine views so the one-shot CLI and
-// the interactive console always look identical.
+// emit renders v: a table in terminal mode, otherwise the selected machine
+// format. Terminal rendering delegates to the shared engine views so the
+// one-shot CLI and the interactive console always look identical.
 func emit(_ any, v any) error {
-	if newPrinter().Format() == "json" {
-		return json.NewEncoder(os.Stdout).Encode(v)
+	p := newPrinter()
+	if p.Format() != "terminal" {
+		return p.Print(v)
 	}
 	switch rows := v.(type) {
 	case []structure.Section:

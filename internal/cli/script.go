@@ -258,8 +258,8 @@ func (b *scriptBinding) runPipeline() error {
 	b.last = report
 
 	p := newPrinter()
-	if p.Format() == "json" {
-		if err := json.NewEncoder(os.Stdout).Encode(report); err != nil {
+	if p.Format() != "terminal" {
+		if err := p.Print(report); err != nil {
 			return err
 		}
 	} else {

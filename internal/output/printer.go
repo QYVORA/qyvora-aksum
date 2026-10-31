@@ -1,21 +1,24 @@
 // Package output renders aksum's human-facing terminal output and its
-// machine-readable JSON reports. Terminal lines follow the QYVORA family
-// convention:
+// machine-readable JSON, YAML, Markdown, and HTML reports. Terminal lines
+// follow the QYVORA family convention:
 //
 //	[12:41:03] [AKSUM] [PHASE] message
 //
-// Machine-readable output (--output json) must never be mixed with terminal
-// decoration: branding and progress belong to human interfaces only.
+// Machine-readable output must never be mixed with terminal decoration:
+// branding and progress belong to human interfaces only.
 package output
 
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"go.yaml.in/yaml/v3"
 )
 
 // Phase names used in the [PHASE] slot.
@@ -34,7 +37,7 @@ const (
 type Printer struct {
 	mu      sync.Mutex
 	out     io.Writer
-	format  string // "terminal" | "json"
+	format  string // terminal | json | yaml | markdown | html
 	quiet   bool
 	nowFunc func() time.Time
 }
@@ -47,8 +50,56 @@ func New() *Printer {
 // SetOutput redirects the printer (used by tests).
 func (p *Printer) SetOutput(w io.Writer) { p.mu.Lock(); p.out = w; p.mu.Unlock() }
 
-// SetFormat selects terminal or json rendering.
+// SetFormat selects terminal, json, yaml, markdown, or html rendering.
 func (p *Printer) SetFormat(f string) { p.mu.Lock(); p.format = f; p.mu.Unlock() }
+
+// ValidFormat reports whether f is a supported output format.
+func ValidFormat(f string) bool {
+	switch f {
+	case "", "terminal", "json", "yaml", "markdown", "html":
+		return true
+	default:
+		return false
+	}
+}
+
+// Print renders v in the active machine format. Terminal callers should use
+// their dedicated renderers instead.
+func (p *Printer) Print(v any) error {
+	p.mu.Lock()
+	w := p.out
+	f := p.format
+	p.mu.Unlock()
+
+	switch f {
+	case "yaml":
+		b, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		var raw any
+		if err := json.Unmarshal(b, &raw); err != nil {
+			return err
+		}
+		return yaml.NewEncoder(w).Encode(raw)
+	case "markdown":
+		b, err := json.MarshalIndent(v, "", "  ")
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(w, "```json\n%s\n```\n", b)
+		return err
+	case "html":
+		b, err := json.MarshalIndent(v, "", "  ")
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(w, "<!doctype html>\n<meta charset=\"utf-8\">\n<pre>%s</pre>\n", html.EscapeString(string(b)))
+		return err
+	default:
+		return EncodeJSON(w, v)
+	}
+}
 
 // Format reports the active format.
 func (p *Printer) Format() string { p.mu.Lock(); defer p.mu.Unlock(); return p.format }
@@ -56,8 +107,8 @@ func (p *Printer) Format() string { p.mu.Lock(); defer p.mu.Unlock(); return p.f
 // SetQuiet suppresses info-level terminal lines (errors still print).
 func (p *Printer) SetQuiet(q bool) { p.mu.Lock(); p.quiet = q; p.mu.Unlock() }
 
-// Info prints one [INFO]-level phase line in terminal mode; no-op in JSON
-// mode so structured output stays clean.
+// Info prints one [INFO]-level phase line in terminal mode; no-op in machine
+// modes so structured output stays clean.
 func (p *Printer) Info(phase, msg string) {
 	p.line("INFO", phase, msg)
 }

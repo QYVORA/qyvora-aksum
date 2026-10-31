@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -45,8 +44,8 @@ out rather than guessed. Non-PE files are refused with a clear error.`,
 			pf.Target.Size = st.Size()
 
 			p := newPrinter()
-			if p.Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(map[string]any{
+			if p.Format() != "terminal" {
+				return p.Print(map[string]any{
 					"target":   pf.Target,
 					"sections": pf.Sections(),
 					"imports":  pf.Imports(),

@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -18,7 +17,8 @@ func newCapabilitiesCmd() *cobra.Command {
 		Short: "Print the machine-readable capability contract",
 		Long: `The capabilities command outputs aksum's complete capability contract.
 
-By default, it outputs JSON. Use --table to render as a terminal table.
+By default, it outputs JSON. Use -o yaml/markdown/html for another machine
+format, or --table (or -o terminal) to render as a terminal table.
 
 This contract lists:
   - Supported binary formats (ELF implemented, PE/Mach-O documented)
@@ -31,25 +31,18 @@ This contract lists:
 Automation and AI systems can query this to understand what aksum can do
 without parsing prose documentation.`,
 		Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if tableMode {
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if tableMode || formatFlag == "terminal" {
 				return renderCapabilitiesTable()
 			}
-			return renderCapabilitiesJSON()
+			p := newPrinter()
+			p.SetOutput(cmd.OutOrStdout())
+			return p.Print(capabilities.Build())
 		},
 	}
 
 	cmd.Flags().BoolVar(&tableMode, "table", false, "render as a compact terminal table")
 	return cmd
-}
-
-func renderCapabilitiesJSON() error {
-	data, err := capabilities.RenderJSON()
-	if err != nil {
-		return fmt.Errorf("encoding capabilities: %w", err)
-	}
-	fmt.Println(string(data))
-	return nil
 }
 
 func renderCapabilitiesTable() error {

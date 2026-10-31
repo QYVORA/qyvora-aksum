@@ -1,9 +1,7 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -111,8 +109,8 @@ func newDisassembleCmd() *cobra.Command {
 			}
 
 			p := newPrinter()
-			if p.Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(map[string]any{ //nolint:err113 // ad-hoc payload
+			if p.Format() != "terminal" {
+				return p.Print(map[string]any{ //nolint:err113 // ad-hoc payload
 					"instructions": insts,
 					"count":        len(insts),
 				})

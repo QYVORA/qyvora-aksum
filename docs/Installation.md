@@ -58,8 +58,8 @@ Notes:
 - Offline or GitHub unreachable? The command fails cleanly; your installed
   binary stays exactly as it was.
 
-Use `--output json` (or `-o json`) for machine-readable output. `-f`/`--format`
-is accepted as an alias.
+Use `--output` (`-o`) with `terminal`, `json`, `yaml`, `markdown`, or `html`
+for machine-readable output. `-f`/`--format` is accepted as an alias.
 
 ## Build from source
 

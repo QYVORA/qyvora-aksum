@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -39,8 +38,8 @@ report contains no risk scores or guesses.`,
 			rep := surface.Build(im.Target, im, im.Exports(), strscan.ClassifyAll(extracted))
 
 			p := newPrinter()
-			if p.Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(rep)
+			if p.Format() != "terminal" {
+				return p.Print(rep)
 			}
 			renderSurface(p, rep)
 			return nil

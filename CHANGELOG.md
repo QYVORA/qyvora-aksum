@@ -7,6 +7,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+
+- **Event transport** — migrated to `qyvora-events v0.2.0`, the
+  structured event contract used by `qyvora-platform` and
+  `qyvora-intelligence`.
+### Changed
+- **Output formats** — every command now supports `yaml`, `markdown`, and
+  `html` alongside `terminal` and `json`, and the capabilities contract
+  advertises all five formats.
 - **Unified version system** — `internal/version` now carries the canonical
   framework identity (framework, version, commit, date, build user, Go
   version/arch/os) stamped via `-ldflags`, plus official QYVORA contact

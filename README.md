@@ -147,7 +147,10 @@ Findings deduplicate deterministically: the same observation across runs yields 
 
 ## Machine-readable output
 
-Every command accepts `-f json`; `analyze` additionally writes a full schema-versioned report:
+Every command accepts `-o/--output` with `terminal`, `json`, `yaml`,
+`markdown`, or `html`; `-f/--format` is an alias. `capabilities -o json`
+publishes the full machine-readable contract, and `analyze` additionally
+writes a full schema-versioned report:
 
 ```bash
 aksum analyze ./target --report report.json --min-severity low

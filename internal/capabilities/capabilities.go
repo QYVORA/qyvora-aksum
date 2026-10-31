@@ -51,7 +51,7 @@ func Build() Document {
 		ExitCodes: map[string]int{
 			"success": 0, "runtime": 1, "usage": 2, "unsupported": 3, "interrupted": 130,
 		},
-		OutputFormats: []string{"terminal", "json"},
+		OutputFormats: []string{"terminal", "json", "yaml", "markdown", "html"},
 		EventVerbs: []string{
 			events.ScanStarted, events.ScanCompleted,
 			events.PhaseStarted, events.PhaseCompleted,
@@ -97,15 +97,15 @@ func Build() Document {
 				Note: "ARM64 support documented but not yet implemented"},
 		},
 		Commands: []Command{
-			{Name: "analyze", Summary: "run full security assessment on a binary", OutputModes: []string{"terminal", "json"}},
-			{Name: "identify", Summary: "identify binary format and architecture", OutputModes: []string{"terminal", "json"}},
-			{Name: "strings", Summary: "extract and analyze strings", OutputModes: []string{"terminal", "json"}},
-			{Name: "functions", Summary: "discover and list functions", OutputModes: []string{"terminal", "json"}},
-			{Name: "xrefs", Summary: "show cross-references", OutputModes: []string{"terminal", "json"}},
-			{Name: "disasm", Summary: "disassemble code", OutputModes: []string{"terminal", "json"}},
-			{Name: "dynamic", Summary: "run authorized dynamic analysis", OutputModes: []string{"terminal", "json"}},
-			{Name: "target", Summary: "manage assessment target", OutputModes: []string{"terminal", "json"}},
-			{Name: "capabilities", Summary: "print this machine-readable contract", OutputModes: []string{"terminal", "json"}},
+			{Name: "analyze", Summary: "run full security assessment on a binary", OutputModes: []string{"terminal", "json", "yaml", "markdown", "html"}},
+			{Name: "identify", Summary: "identify binary format and architecture", OutputModes: []string{"terminal", "json", "yaml", "markdown", "html"}},
+			{Name: "strings", Summary: "extract and analyze strings", OutputModes: []string{"terminal", "json", "yaml", "markdown", "html"}},
+			{Name: "functions", Summary: "discover and list functions", OutputModes: []string{"terminal", "json", "yaml", "markdown", "html"}},
+			{Name: "xrefs", Summary: "show cross-references", OutputModes: []string{"terminal", "json", "yaml", "markdown", "html"}},
+			{Name: "disasm", Summary: "disassemble code", OutputModes: []string{"terminal", "json", "yaml", "markdown", "html"}},
+			{Name: "dynamic", Summary: "run authorized dynamic analysis", OutputModes: []string{"terminal", "json", "yaml", "markdown", "html"}},
+			{Name: "target", Summary: "manage assessment target", OutputModes: []string{"terminal", "json", "yaml", "markdown", "html"}},
+			{Name: "capabilities", Summary: "print this machine-readable contract", OutputModes: []string{"terminal", "json", "yaml", "markdown", "html"}},
 		},
 	}
 }

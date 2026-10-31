@@ -1,12 +1,12 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/QYVORA/qyvora-aksum/internal/output"
 	"github.com/QYVORA/qyvora-aksum/internal/version"
 )
 
@@ -17,10 +17,13 @@ func newVersionCmd() *cobra.Command {
 		Short: "Print the aksum version",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			info := version.GetInfo()
-			// Both the local --json flag and the global --output json select
-			// machine-readable output, matching the toolchain-wide contract.
-			if jsonOut || newPrinter().Format() == "json" {
-				return json.NewEncoder(os.Stdout).Encode(info) //nolint:err113 // stable payload
+			// Both the local --json flag and any global machine format select
+			// structured output, matching the toolchain-wide contract.
+			if jsonOut {
+				return output.EncodeJSON(os.Stdout, info)
+			}
+			if p := newPrinter(); p.Format() != "terminal" {
+				return p.Print(info)
 			}
 			fmt.Printf("aksum %s\n", info.Version)
 			fmt.Printf("  framework:  %s\n", info.Framework)

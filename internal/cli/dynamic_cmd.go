@@ -3,7 +3,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -94,8 +93,8 @@ func runDynamicPlan(c *cobra.Command, args []string) error {
 	}
 
 	p := newPrinter()
-	if p.Format() == "json" {
-		return json.NewEncoder(os.Stdout).Encode(plan)
+	if p.Format() != "terminal" {
+		return p.Print(plan)
 	}
 	data, merr := json.MarshalIndent(plan, "", "  ")
 	if merr != nil {
