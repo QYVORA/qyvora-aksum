@@ -96,41 +96,12 @@ relocations, tracks call-site arguments through registers and stack slots,
 and escalates findings to `VALIDATED` only when a statically resolved call
 site corroborates them.
 
-## Interactive console
+## Interactive console — unavailable in this release
 
-Run `aksum` with no subcommand and you get an interactive session instead of
-a wall of flags — same engine, same commands, one persistent target:
-
-```
-$ aksum
-
-  ╔══════════════════════════════════════════════╗
-  ║                    AKSUM                     ║
-  ║   Binary Security & Reverse Engineering      ║
-  ║                    QYVORA                    ║
-  ╚══════════════════════════════════════════════╝
-
-aksum > open /usr/bin/ls
-[+] Target loaded
-aksum [/usr/bin/ls] > functions --min-confidence high
-aksum [/usr/bin/ls] > xrefs --string "Usage"
-aksum [/usr/bin/ls] > analyze --min-severity low
-aksum [/usr/bin/ls] > quit
-```
-
-- **Contextual prompt** shows the loaded target; `open` caches the analysis
-  context so every later command skips re-parsing.
-- **Tab completion** for commands, aliases (`?`, `b`, `syms`, `dis`, …), and
-  per-command flags; **arrow-key history** persists across sessions in
-  `~/.aksum_history`.
-- **`help <command>`** documents usage, aliases, and flags; unknown commands
-  suggest the closest real command; every result renders as a clean table,
-  or append `--json` anywhere for machine-readable output.
-- **Scriptable**: pipe a script on stdin (`echo 'help' | aksum`) — prompts
-  are never echoed, sessions stay side-effect free.
-
-Every one-shot CLI command keeps working unchanged. See
-[docs/Console.md](docs/Console.md) for the full reference.
+The interactive console is retired and not built: `internal/cli/tui.go` carries
+`//go:build ignore`, and a bare `aksum` invocation prints CLI usage. The
+per-tool TUI is disabled pending the redirect of qyvora-tui to the future AI
+orchestration layer. Use the one-shot CLI commands above.
 
 ## Findings model
 
@@ -186,7 +157,7 @@ full analysis lifecycle for automation: `scan.started`, bracketed
 | [Getting started](docs/Getting-Started.md) | First identification and assessment |
 | [Installation](docs/Installation.md) | Installer and building from source |
 | [CLI reference](docs/CLI.md) | Every command and flag |
-| [Console](docs/Console.md) | Interactive session: prompt, history, completion |
+| [Console (retired)](docs/Console.md) | Historical reference; unavailable in this release |
 | [Architecture](docs/Architecture.md) | Package layout, pipeline, dataflow design |
 | [Findings](docs/Findings.md) | Rule families, confidence model, IDs |
 | [Validation](docs/Validation.md) | How findings earn VALIDATED |
