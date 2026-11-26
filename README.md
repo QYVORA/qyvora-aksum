@@ -71,6 +71,10 @@
 
 ---
 
+## Readiness
+
+**BETA.** AKSUM implements ELF binary analysis for x86/x86-64; PE/Mach-O support is planned, and other architectures are refused rather than guessed. Implementation exists for exploration/testing but has not received final production-readiness approval. Its owner classification is `BETA` in the [Product Registry](../../../../knowledge/qyvora-docs/07-products/PRODUCT-REGISTRY.md); release tags do not promote it to `AVAILABLE`.
+
 ## What it does
 
 AKSUM is a terminal-first binary-security assessment platform. Give it an ELF binary — it identifies the target, enumerates its structure, extracts and classifies strings, disassembles executable code, discovers functions, builds call/control-flow graphs, maps cross-references, and reports candidate weaknesses as **evidence-backed findings with explicit confidence**.
